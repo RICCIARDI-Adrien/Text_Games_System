@@ -1,0 +1,201 @@
+﻿+--------------------------------------------------------+
+|  Programmer le Text Games System (aka Strawberry PIC)  |
++--------------------------------------------------------+
+Date de mise à jour du manuel : 23/10/2013
+
+Installation de l'environnement de développement
+------------------------------------------------
+
+1) Installer le compilateur SourceBoost version 7.20 ou ultérieure et l'activer.
+2) Rajouter une variable d'environnement (de type variable système) nommée SOURCEBOOST_PATH et ayant pour valeur le chemin d'installation de SourceBoost (le chemin par défaut est "C:\Program Files\SourceBoost"). Il faut laisser les guillemets autour de la chaîne.
+
+Organisation des sources
+------------------------
+
+Le répertoire Documentation contient la documentation Doxygen de la bibliothèque système (Documentation/System) ainsi que ce bref manuel.
+Le répertoire Software regroupe tout le code du projet ainsi que les outil spécifiques au Text Games System pour générer les programmes.
+Le dossier Hardware contient le schéma électrique de la machine.
+
+Différents scripts batch sont présents dans ce dossier.
+Il faut d'abord compiler la bibliothèque System avant de pouvoir compiler les autres applications.
+Pour cela, se rendre dans Software/Sources/System et lancer le script Compile.bat.
+
+Configuration de PuTTY pour accéder au Text Games System via Internet
+---------------------------------------------------------------------
+
+Le programme PuTTY se trouve dans le répertoire Tools.
+Il permet de d'accéder à un port série (physique ou émulé) ou bien d'établir une connexion telnet ou SSH.
+Les paramètres de chaque connexion peuvent être sauvegardés dans des "sessions".
+Cependant, les paramètres des sessions étant sauvegardés dans le registre Windows, il faut les reconfigurer sur chaque nouveau PC.
+
+1) Lancer PuTTY.
+2) Dans l'onglet "Terminal", mettre "Local echo" et "Local line editing" à "Force off".
+3) Dans l'onglet "Terminal/Keyboard", modifier "Backspace key" en "Control-H".
+4) Dans l'onglet Window, définir une taille de terminal de 80 colonnes par 24 lignes.
+5) Revenir à l'onglet "Session". Mettre l'IP dans le champ "Host Name" ainsi que le port.
+Sélectionner une connexion de type "Telnet".
+6) Ecrire "Text Games System" dans le champ de texte "Saved Sessions" et cliquer sur "Save" pour sauvegarder la session sous ce nom.
+
+Utilisation du Text Games System via Internet
+---------------------------------------------
+
+Le PC et le Text Games System sont reliés par un unique port série, lequel ne peut pas accepter plusieurs "connexions" simultanées.
+
+Pour interagir avec le TGS :
+   # Lancer le serveur sur le PC de test (script Software/Launch_Server.bat) si ce n'est déjà fait.
+   # Se connecter sur le serveur avec la session distante PuTTY.
+   # Si le TGS vient d'être programmé, appuyer sur la touche 'r' ("run") pour le démarrer en mode interactif. Sinon, le TGS se trouvera dans l'état dans lequel il était avant la déconnexion de la session PuTTY précédente.  
+   Attention : la programmation du TGS le reboote automatiquement dès la fin du procédé, mais le fait de simplement s'y connecter ne le fait pas.
+   Le TGS se trouve dans l'état dans lequel il avait été laissé avant la connexion (affichage d'un menu, lecture d'une chaîne...), mais l'écran sera certainement noir. En cas d'incertitude sur l'état du TGS, il vaut mieux le reprogrammer pour revenir sur le bootloader et appuyer sur la touche 'r' pour démarrer.
+
+Pour programmer le TGS :
+   # Se connecter en VNC sur le PC de développement (il n'est pas nécessaire de se déconnecter à chaque fois).
+   # Fermer le serveur permettant de se connecter à la session PuTTY s'il est actif (car ce dernier utilise le port série et ne permet pas à d'autres programmes d'y accéder).
+   # Télécharger les fichiers binaires à programmer dans le dossier Software/Binaries à l'aide de la connexion VNC.
+   # Lancer le script batch de programmation adéquat (Software/Download_XXX.bat). Lorsqu'il est lancé, le programmateur envoie un nombre magique qui fait redémarrer instantanément le TGS et active le mode programmation.
+   # Une fois la programmation terminée, relancer le serveur (Software/Launch_Server.bat).
+   # Se connecter sur le serveur avec la session distante PuTTY et appuyer sur 'r' pour lancer le Text Games System.
+
+Utilisation des chaînes de caractères
+-------------------------------------
+
+Pour éviter de gaspiller de la place en mémoire programme en y stockant les chaînes, une mémoire EEPROM de 4096 octets a été ajoutée. La majorité des chaînes du jeu peuvent y être enregistrées et lues rapidement. 
+La vitesse de lecture à partir de cette mémoire est d'environ 10 Ko/s, ce qui est largement suffisant pour charger des chaînes. Cependant, la vitesse d'écriture est beaucoup plus faible (environ 200 octets/s).
+
+J'ai essayé de simplifier et d'automatiser au maximum l'utilisation de ces chaînes.
+Un fichier (appelé Strings.txt, mais ce nom peut être modifié sans problème), liste l'identifiant et le contenu de chaque chaîne. L'identifiant est directement converti en une macro C qui peut être appelée depuis le code source.
+
+Format du fichier Strings.txt :
+###############################
+
+IDENTIFIANT_CHAINE_1 "Contenu chaîne 1"
+_identifiantChaine2       "Contenu chaîne 2 àààéééé"
+
+L'identifiant de la chaîne doit être une séquence de caractères valide pour le préprocesseur C.
+Le contenu de la chaîne doit se trouver entre guillemets.
+Le nombre d'espaces ou de tabulations entre l'identifiant et le contenu n'importe pas.
+Un zéro terminal est automatiquement ajouté à la fin de chaque chaîne.
+Les accents et les caractères spéciaux sont acceptés, c'est au terminal d'affichage de les rendre correctement (ça fonctionne très bien avec Putty, Hyperterminal et Minicom).
+
+Un programme utilitaire, EEPROMStringsConverter (il se trouve dans le répertoire Tools), s'occupe de parser le fichier Strings.txt.
+Il stocke les chaînes dans la mémoire externe et calcule l'offset de chacune d'entre elles. En sortie, ce programme crée un fichier Strings.h qui contient l'identifiant de chaque chaîne sous forme de macro C et l'offset correspondant à la position de la chaîne dans la mémoire externe. Ainsi, le contenu de la chaîne n'est pas stocké dans la mémoire programme mais seulement les 2 octets représentant son offset.
+
+Fichier Strings.h correspondant au fichier Strings.txt décrit plus haut :
+#########################################################################
+
+/** File automatically generated by EEPROMStringsConverter. */
+#ifndef H_STRINGS_H
+#define H_STRINGS_H
+
+#define IDENTIFIANT_CHAINE_1 0
+#define _identifiantChaine2 17
+
+#endif
+
+Le mini tutoriel explique comment utiliser ces chaînes stockées en mémoire externe. L'aide du programme EEPROMStringsConverter explique aussi brièvement le fonctionnement de ce dernier (pour l'afficher, lancer un terminal, se rendre dans le dossier Software/Tools/EEPROMStringsConverter et taper EEPROMStringsConverter).
+
+Trucs et astuces concernant l'écriture du code
+----------------------------------------------
+
+- Le microcontrôleur PIC dispose de 368 octets de RAM qui ne sont pas contigus.
+  La création d'une structure de données qui occupe trop de place en RAM peut ainsi échouer (le linker se plaindra s'il ne trouve pas la RAM nécessaire). La taille maximale d'une structure de données est ainsi de 112 octets contigus.
+
+- Lorsque c'est possible, utiliser des variables de type "unsigned char" au lieu d'un autre type.
+  Tous les calculs sont plus rapides et occupent moins de place en mémoire programme s'ils sont non signés (spécifier "unsigned" partout
+  où des nombres signés ne sont pas explicitement nécessaires).
+  Le PIC ne sait faire nativement que des additions non signées sur 8 bits et des soustractions non signées sur 8 bits.
+  
+- Il est tout à fait possible de multiplier, diviser et d'utiliser l'opérateur "modulo". Cependant, tous ces calculs sont émulés à l'aide
+  d'additions, soustractions et décalages, ce qui peut engendrer une baisse des performances à cause de calculs trop complexes.
+  
+- Il est IMPOSSIBLE d'utiliser la récursion sur ce processeur à cause d'une stack circulaire matérielle de 8 niveaux (arrivée au 8ème niveau, 
+  elle écrase le premier niveau...).
+  Cependant, le compilateur gère de façon transparente une stack logicielle au cas où celle matérielle ne suffirait pas.
+  Il devient alors possible d'appeler plus de 8 fonctions à la suite (mais il est préférable de ne pas appeler 300 fonctions non plus).
+
+- La programmation en C s'effectue exactement de la même façon que sur un PC.
+  Voici les quelques limitations à prendre en compte :
+  # Types C disponibles :
+    bool (1 bit)
+    char (8 bits)
+    short (16 bits) / int (16 bits)
+    long (32 bits)
+  # Il n'y a pas d'émulation des nombres flottants.
+  # La taille d'un tableau est d'au maximum 112 octets. Si tous les éléments d'un tableau ne sont pas utilisés, le linker sera capable d'en supprimer
+    automatiquement et autorisera un tableau de taille supérieure à 112 octets.
+	ATTENTION : si les éléments restants du tableau viennent à être utilisés, ça ne fonctionnera plus ! Cette pratique est fortement déconseillée.
+	
+- Pour aller à la ligne dans un terminal VT100, c'est-à-dire le type de terminal qui est émulé par Putty, Minicom ou Hyperterminal,
+  il faut utiliser la séquence de caractères "\r\n" et non `\n` uniquement.
+  Le programme EEPROMStringsConverter reconnaît les séquences d'échappement suivantes : \n, \r, \", \\.
+  Si t'as besoin d'autres séquences d'échappement, hésite pas à me le demander !
+  
+- Fonctions de la bibliothèque système :
+  # Les fonctions d'affichage commencent par Screen,
+  # Les fonctions d'accès au clavier commencent par Keyboard,
+  # Les fonctions de génération de nombres (pseudo-)aléatoires commencent par Random,
+  # Les fonctions liées au timer 60 Hz commencent par Timer,
+  # Des alias sont disponibles pour certaines fonctions de la libc standard : il est possible de faire références à certaines fonctions
+    avec le nom classique qu'elles portent sur un système POSIX. Le fichier Standard_Library.h recense ces fonctions.
+	
+- Le fichier "System.h" contient tous les headers des autres modules de la bibliothèque système,
+  il est le seul fichier à inclure dans un programme (en plus de Strings.h).
+
+- L'utilisation des pointeurs (*ptr; ptr++; ...) au lieu des opérateurs de tableau [] (ptr[i]; ...) génère souvent un code plus léger. Privilégier le code utilisant des pointeurs en cas de manque de place dans la mémoire d'instructions.
+
+Mini tutoriel
+-------------
+
+Voici la structure d'un programme C extrêmement simple :
+
+#include "../System/System.h"
+
+void main(void)
+{
+	// Initialisation de la machine : cet appel est obligatoire ou rien ne fonctionnera.
+	// Ce doit être le premier appel de fonction du programme, et la fonction ne doit être appelée qu'une seule et unique fois.
+	SystemInit();
+	
+	// Affiche une chaîne à l'écran.
+	// Cette chaîne est stockée dans la mémoire programme du PIC et non dans la mémoire dédiée externe, elle gaspille alors une quantité non négligeable de mémoire programme.
+	ScreenWriteString("Salut !");
+	
+	// Il ne vaut mieux pas sortir de la fonction main() car le PIC va exécuter les instructions suivantes dans la mémoire, c'est-à-dire n'importe quoi (la lecture de la mémoire programme est cyclique, une fois arrivé à la fin, le compteur ordinal repart du début).
+	while (1);
+}
+
+Voici le même programme, mais cette version stocke la chaîne dans la mémoire externe dédiée :
+
+#include "../System/System.h"
+#include "Strings.h" // Contient tous les offsets des chaînes stockées dans la mémoire externe
+
+void main(void)
+{
+	// Initialisation de la machine : cet appel est obligatoire ou rien ne fonctionnera.
+	// Ce doit être le premier appel de fonction du programme, et la fonction ne doit être appelée qu'une seule et unique fois.
+	SystemInit();
+	
+	// Affiche une chaîne à l'écran.
+	// Cette chaîne est stockée dans la mémoire externe du Text Games System. Quelle que soit sa taille, elle occupera toujours le même nombre d'instructions car STRING_SALUT représente un offset sur 16 bits dans la mémoire externe. La fin de la chaîne est délimitée par la valeur 0.
+	ScreenWriteROMString(STRING_SALUT);
+	
+	// Il ne vaut mieux pas sortir de la fonction main() car le PIC va exécuter les instructions suivantes dans la mémoire, c'est-à-dire n'importe quoi (la lecture de la mémoire programme est cyclique, une fois arrivé à la fin, le compteur ordinal repart du début).
+	while (1);
+}
+
+Le fichier Strings.h est automatiquement généré par le programme Tools/EEPROMStringsConverter à partir du fichier Strings.txt qui se trouve dans le même répertoire que le fichier C.
+
+Voici le contenu du fichier Strings.txt :
+STRING_SALUT "Salut !"
+
+Le fichier Strings.h correspondant ressemblera à ceci :
+
+/** File automatically generated by EEPROMStringsConverter. */
+#ifndef H_STRINGS_H
+#define H_STRINGS_H
+
+#define STRING_SALUT 0
+
+#endif
+
+Pour plus de détails, se référer aux sources des jeux se trouvant dans le répertoire Games.

@@ -1,0 +1,2 @@
+# Do not track auto-generated .asm files
+*.asm

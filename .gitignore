@@ -1,0 +1,12 @@
+*.bin
+*.casm
+*.cof
+*.exe
+*.hex
+*.lib
+*.lst
+*.obj
+*.map
+*.stat
+*.tree
+
