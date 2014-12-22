@@ -12,6 +12,9 @@ define DisplayTitle
 endef
 
 all:
+	$(call DisplayTitle, "Compiling needed tools", 33)
+	@cd ../Tools/EEPROMStringsConverter && $(MAKE)
+	@cd ../Tools/Programmer && $(MAKE)
 	$(call DisplayTitle, "Compiling System", 33)
 	@cd Sources/System && $(MAKE)
 	$(call DisplayTitle, "Compiling Calculator", 33)
