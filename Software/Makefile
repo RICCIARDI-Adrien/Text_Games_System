@@ -30,6 +30,8 @@ all:
 	$(call DisplayTitle, "Compiling Tests", 33)
 	@cd Sources/Tests && $(MAKE)
 	$(call DisplayTitle, "Build successful", 32)
+	@cd Sources/Timestamp_Storage && $(MAKE)
+	$(call DisplayTitle, "Build successful", 32)
 	
 clean:
 	@rm -f $(TEXT_GAMES_SYSTEM_BINARIES_PATH)/*
@@ -40,3 +42,4 @@ clean:
 	@cd Sources/ePIC_Adventures && $(MAKE) clean
 	@cd Sources/Games && $(MAKE) clean
 	@cd Sources/Tests && $(MAKE) clean
+	@cd Sources/Timestamp_Storage && $(MAKE) clean

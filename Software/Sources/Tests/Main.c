@@ -6,6 +6,7 @@
 #include <System/System.h>
 #include "Test_Clock_Speed.h"
 #include "Test_External_EEPROM.h"
+#include "Test_Internal_EEPROM.h"
 #include "Test_Random.h"
 #include "Test_Screen_Speed.h"
 
@@ -29,12 +30,13 @@ void main(void)
 		ScreenWriteString("    2. Screen printing speed\r\n");
 		ScreenWriteString("    3. Clock frequency\r\n");
 		ScreenWriteString("    4. External EEPROM\r\n");
+		ScreenWriteString("    5. Internal EEPROM\r\n");
 						
 		// Wait for the user to hit a key
 		do
 		{
 			Key = KeyboardReadCharacter();
-		} while ((Key < '1') || (Key > '4'));
+		} while ((Key < '1') || (Key > '5'));
 		
 		// Start chosen test
 		ScreenClear();
@@ -51,6 +53,9 @@ void main(void)
 				break;
 			case '4':
 				TestExternalEEPROM();
+				break;
+			case '5':
+				TestInternalEEPROM();
 				break;
 		}
 	}

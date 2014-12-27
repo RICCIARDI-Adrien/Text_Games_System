@@ -4,7 +4,7 @@ Serial_Port=/dev/ttyS0
 
 # Set the serial port at 19200 bauds, no parity, 8 data bits, 1 stop bit
 echo "Configuring serial port..."
-stty --file=$Serial_Port 19200
+stty --file=$Serial_Port 19200 cs8
 
 # Send the reboot code to the Text Games System
 echo "Sending reboot code..."

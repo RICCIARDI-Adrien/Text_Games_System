@@ -1,44 +1,35 @@
-/** @file Test_External_EEPROM.c
- * @see Test_External_EEPROM.h for description.
+/** @file Test_Internal_EEPROM.c
+ * @see Test_Internal_EEPROM.h for description.
  * @author Adrien RICCIARDI
  */
 #include <System/System.h>
-#include "Test_External_EEPROM.h"
+#include "Test_Internal_EEPROM.h"
 
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
-void TestExternalEEPROM(void)
+void TestInternalEEPROM(void)
 {
-	unsigned short i, Address;
+	unsigned short Address;
 	unsigned char Written_Byte, Read_Byte;
 	
-	ScreenWriteString("Starting external EEPROM test...\r\n");
+	ScreenWriteString("Starting internal EEPROM test...\r\n");
 	RandomInitializeGenerator();
 	
-	for (i = 0; i < TEST_EXTERNAL_EEPROM_CYCLES_COUNT; i++)
+	for (Address = 0; Address < TEST_INTERNAL_EEPROM_MEMORY_SIZE_BYTES; Address++)
 	{
-		// Generate an address in the in the memory bounds
-		Address = (RandomGenerateNumber() << 8) | RandomGenerateNumber();
-		Address %= TEST_EXTERNAL_EEPROM_MEMORY_SIZE_BYTES;
-		
-		// Write a random byte at this address
+		// Write a random byte at the current address
 		Written_Byte = RandomGenerateNumber();
-		I2CWriteByte(Address, Written_Byte);
+		InternalEEPROMWriteByte((unsigned char) Address, Written_Byte);
 		
 		// Read the memory location to check if the byte was successfully written
-		I2CSetCurrentAddress(Address);
-		Read_Byte = I2CReadNextByte();
+		Read_Byte = InternalEEPROMReadByte(Address);
 		
 		if (Read_Byte != Written_Byte)
 		{
 			// Compose error message
 			ScreenSetColor(SCREEN_COLOR_CODE_TEXT_RED);
-			ScreenWriteString("Error at check ");
-			ScreenWriteUnsignedInteger(i + 1);
-			ScreenWriteCharacter('/');
-			ScreenWriteUnsignedInteger(TEST_EXTERNAL_EEPROM_CYCLES_COUNT);
-			ScreenWriteString(", address = ");
+			ScreenWriteString("Error at address ");
 			ScreenWriteUnsignedInteger(Address);
 			ScreenWriteString(", the written byte was ");
 			ScreenWriteUnsignedInteger(Written_Byte);
