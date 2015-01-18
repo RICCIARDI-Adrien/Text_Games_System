@@ -1,7 +1,7 @@
 ﻿+--------------------------------------------------------+
 |  Programmer le Text Games System (aka Strawberry PIC)  |
 +--------------------------------------------------------+
-Date de mise à jour du manuel : 23/10/2013
+Date de mise à jour du manuel : 18/01/2015
 
 Installation de l'environnement de développement
 ------------------------------------------------
@@ -13,48 +13,11 @@ Organisation des sources
 ------------------------
 
 Le répertoire Documentation contient la documentation Doxygen de la bibliothèque système (Documentation/System) ainsi que ce bref manuel.
-Le répertoire Software regroupe tout le code du projet ainsi que les outil spécifiques au Text Games System pour générer les programmes.
+Le répertoire Software regroupe tout le code du projet ainsi que les outils spécifiques au Text Games System pour générer les programmes.
 Le dossier Hardware contient le schéma électrique de la machine.
 
 Différents scripts batch sont présents dans ce dossier.
 Il faut d'abord compiler la bibliothèque System avant de pouvoir compiler les autres applications.
-Pour cela, se rendre dans Software/Sources/System et lancer le script Compile.bat.
-
-Configuration de PuTTY pour accéder au Text Games System via Internet
----------------------------------------------------------------------
-
-Le programme PuTTY se trouve dans le répertoire Tools.
-Il permet de d'accéder à un port série (physique ou émulé) ou bien d'établir une connexion telnet ou SSH.
-Les paramètres de chaque connexion peuvent être sauvegardés dans des "sessions".
-Cependant, les paramètres des sessions étant sauvegardés dans le registre Windows, il faut les reconfigurer sur chaque nouveau PC.
-
-1) Lancer PuTTY.
-2) Dans l'onglet "Terminal", mettre "Local echo" et "Local line editing" à "Force off".
-3) Dans l'onglet "Terminal/Keyboard", modifier "Backspace key" en "Control-H".
-4) Dans l'onglet Window, définir une taille de terminal de 80 colonnes par 24 lignes.
-5) Revenir à l'onglet "Session". Mettre l'IP dans le champ "Host Name" ainsi que le port.
-Sélectionner une connexion de type "Telnet".
-6) Ecrire "Text Games System" dans le champ de texte "Saved Sessions" et cliquer sur "Save" pour sauvegarder la session sous ce nom.
-
-Utilisation du Text Games System via Internet
----------------------------------------------
-
-Le PC et le Text Games System sont reliés par un unique port série, lequel ne peut pas accepter plusieurs "connexions" simultanées.
-
-Pour interagir avec le TGS :
-   # Lancer le serveur sur le PC de test (script Software/Launch_Server.bat) si ce n'est déjà fait.
-   # Se connecter sur le serveur avec la session distante PuTTY.
-   # Si le TGS vient d'être programmé, appuyer sur la touche 'r' ("run") pour le démarrer en mode interactif. Sinon, le TGS se trouvera dans l'état dans lequel il était avant la déconnexion de la session PuTTY précédente.  
-   Attention : la programmation du TGS le reboote automatiquement dès la fin du procédé, mais le fait de simplement s'y connecter ne le fait pas.
-   Le TGS se trouve dans l'état dans lequel il avait été laissé avant la connexion (affichage d'un menu, lecture d'une chaîne...), mais l'écran sera certainement noir. En cas d'incertitude sur l'état du TGS, il vaut mieux le reprogrammer pour revenir sur le bootloader et appuyer sur la touche 'r' pour démarrer.
-
-Pour programmer le TGS :
-   # Se connecter en VNC sur le PC de développement (il n'est pas nécessaire de se déconnecter à chaque fois).
-   # Fermer le serveur permettant de se connecter à la session PuTTY s'il est actif (car ce dernier utilise le port série et ne permet pas à d'autres programmes d'y accéder).
-   # Télécharger les fichiers binaires à programmer dans le dossier Software/Binaries à l'aide de la connexion VNC.
-   # Lancer le script batch de programmation adéquat (Software/Download_XXX.bat). Lorsqu'il est lancé, le programmateur envoie un nombre magique qui fait redémarrer instantanément le TGS et active le mode programmation.
-   # Une fois la programmation terminée, relancer le serveur (Software/Launch_Server.bat).
-   # Se connecter sur le serveur avec la session distante PuTTY et appuyer sur 'r' pour lancer le Text Games System.
 
 Utilisation des chaînes de caractères
 -------------------------------------
@@ -63,7 +26,7 @@ Pour éviter de gaspiller de la place en mémoire programme en y stockant les ch
 La vitesse de lecture à partir de cette mémoire est d'environ 10 Ko/s, ce qui est largement suffisant pour charger des chaînes. Cependant, la vitesse d'écriture est beaucoup plus faible (environ 200 octets/s).
 
 J'ai essayé de simplifier et d'automatiser au maximum l'utilisation de ces chaînes.
-Un fichier (appelé Strings.txt, mais ce nom peut être modifié sans problème), liste l'identifiant et le contenu de chaque chaîne. L'identifiant est directement converti en une macro C qui peut être appelée depuis le code source.
+Un fichier (appelé Strings.txt, mais ce nom peut être modifié sans problème) liste l'identifiant et le contenu de chaque chaîne. L'identifiant est directement converti en une macro C qui peut être appelée depuis le code source.
 
 Format du fichier Strings.txt :
 ###############################
@@ -110,8 +73,6 @@ Trucs et astuces concernant l'écriture du code
   
 - Il est IMPOSSIBLE d'utiliser la récursion sur ce processeur à cause d'une stack circulaire matérielle de 8 niveaux (arrivée au 8ème niveau, 
   elle écrase le premier niveau...).
-  Cependant, le compilateur gère de façon transparente une stack logicielle au cas où celle matérielle ne suffirait pas.
-  Il devient alors possible d'appeler plus de 8 fonctions à la suite (mais il est préférable de ne pas appeler 300 fonctions non plus).
 
 - La programmation en C s'effectue exactement de la même façon que sur un PC.
   Voici les quelques limitations à prendre en compte :
@@ -128,15 +89,15 @@ Trucs et astuces concernant l'écriture du code
 - Pour aller à la ligne dans un terminal VT100, c'est-à-dire le type de terminal qui est émulé par Putty, Minicom ou Hyperterminal,
   il faut utiliser la séquence de caractères "\r\n" et non `\n` uniquement.
   Le programme EEPROMStringsConverter reconnaît les séquences d'échappement suivantes : \n, \r, \", \\.
-  Si t'as besoin d'autres séquences d'échappement, hésite pas à me le demander !
   
 - Fonctions de la bibliothèque système :
   # Les fonctions d'affichage commencent par Screen,
   # Les fonctions d'accès au clavier commencent par Keyboard,
   # Les fonctions de génération de nombres (pseudo-)aléatoires commencent par Random,
   # Les fonctions liées au timer 60 Hz commencent par Timer,
-  # Des alias sont disponibles pour certaines fonctions de la libc standard : il est possible de faire références à certaines fonctions
-    avec le nom classique qu'elles portent sur un système POSIX. Le fichier Standard_Library.h recense ces fonctions.
+  # Certaines fonctions POSIX optimisées sont disponibles (voir Standard_Library.h),
+  # Il est possible d'accéder à l'EEPROM interne du PIC via les fonctions commençant par InternalEEPROM,
+  # L'EEPROM externe est prise en charge par les fonctions commençant par I2C.
 	
 - Le fichier "System.h" contient tous les headers des autres modules de la bibliothèque système,
   il est le seul fichier à inclure dans un programme (en plus de Strings.h).
@@ -148,7 +109,7 @@ Mini tutoriel
 
 Voici la structure d'un programme C extrêmement simple :
 
-#include "../System/System.h"
+#include <System/System.h>
 
 void main(void)
 {
@@ -166,7 +127,7 @@ void main(void)
 
 Voici le même programme, mais cette version stocke la chaîne dans la mémoire externe dédiée :
 
-#include "../System/System.h"
+#include <System/System.h>
 #include "Strings.h" // Contient tous les offsets des chaînes stockées dans la mémoire externe
 
 void main(void)
