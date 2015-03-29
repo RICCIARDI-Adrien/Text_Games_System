@@ -29,7 +29,7 @@ all:
 	@cd Sources/Games && $(MAKE)
 	$(call DisplayTitle, "Compiling Tests", 33)
 	@cd Sources/Tests && $(MAKE)
-	$(call DisplayTitle, "Build successful", 32)
+	$(call DisplayTitle, "Compiling Timestamp Storage", 33)
 	@cd Sources/Timestamp_Storage && $(MAKE)
 	$(call DisplayTitle, "Build successful", 32)
 	
