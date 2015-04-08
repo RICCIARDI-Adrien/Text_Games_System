@@ -6,6 +6,9 @@
 #ifndef H_PARSER_H
 #define H_PARSER_H
 
+//-------------------------------------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------------------------------------
 /** Initialize the parser.
  * @param Input_File_Resources The file from which to read string resources.
  * @param Output_File_Header The file in which to write the C header (.h) file.

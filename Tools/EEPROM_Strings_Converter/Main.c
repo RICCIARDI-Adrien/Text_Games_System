@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include "Parser.h"
 
+//-------------------------------------------------------------------------------------------------
+// Private functions
+//-------------------------------------------------------------------------------------------------
 /** Retrieve the size of a file.
  * @param String_File_Name The name of the file to find size.
  * @return The file size in bytes -1 if an error occurred.
@@ -30,6 +33,9 @@ static int GetFileSize(char *String_File_Name)
 	return File_Size;
 }
 
+//-------------------------------------------------------------------------------------------------
+// Entry point
+//-------------------------------------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
 	FILE *File_Resources, *File_Header, *File_EEPROM;
@@ -44,7 +50,7 @@ int main(int argc, char *argv[])
 	// Check arguments
 	if (argc != 5)
 	{
-		printf("Usage : EEPROMStringsConverter  Resources_File_Name  Output_Header_File_Name  Output_EEPROM_Image_File_Name  EEPROM_Size_Bytes.\n\n");
+		printf("Usage : %s Resources_File_Name Output_Header_File_Name Output_EEPROM_Image_File_Name EEPROM_Size_Bytes.\n\n", argv[0]);
 	
 		printf("Resources file composition :\n");
 		printf("----------------------------\n");
