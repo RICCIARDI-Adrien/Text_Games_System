@@ -30,7 +30,8 @@ all:
 	$(call DisplayTitle, "Compiling Tests", 33)
 	@cd Sources/Tests && $(MAKE)
 	$(call DisplayTitle, "Compiling Timestamp Storage", 33)
-	@cd Sources/Timestamp_Storage && $(MAKE)
+	@cd Sources/Timestamp_Storage/Microcontroller && $(MAKE)
+	@cd Sources/Timestamp_Storage/PC && $(MAKE)
 	$(call DisplayTitle, "Build successful", 32)
 	
 clean:
@@ -42,4 +43,5 @@ clean:
 	@cd Sources/ePIC_Adventures && $(MAKE) clean
 	@cd Sources/Games && $(MAKE) clean
 	@cd Sources/Tests && $(MAKE) clean
-	@cd Sources/Timestamp_Storage && $(MAKE) clean
+	@cd Sources/Timestamp_Storage/Microcontroller && $(MAKE) clean
+	@cd Sources/Timestamp_Storage/PC && $(MAKE) clean

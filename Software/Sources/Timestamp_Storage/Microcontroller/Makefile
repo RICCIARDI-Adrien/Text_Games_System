@@ -1,8 +1,8 @@
 # Makefile for Timestamp Storage
-include ../../../Tools/Main_Makefile
+include ../../../../Tools/Main_Makefile
 
 # The SOFTWARE_PATH and OBJECTS_PATH are mandatory for the main Makefile
-SOFTWARE_PATH = ../..
+SOFTWARE_PATH = ../../..
 OBJECTS_PATH = $(TEXT_GAMES_SYSTEM_OBJECTS_PATH)/Timestamp_Storage
 OBJECTS = $(OBJECTS_PATH)/Main.obj
 BINARY = Timestamp_Storage
