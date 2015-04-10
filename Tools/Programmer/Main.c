@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	// Check parameters
 	if (argc != 4)
 	{
-		printf("Usage :\n%s HexadecimalFile EEPROMImageFile UARTDeviceFileName\n", argv[0]);
+		printf("Usage : %s Hexadecimal_File EEPROM_Image_File UART_Device_File_Name\n", argv[0]);
 		return -1;
 	}
 	

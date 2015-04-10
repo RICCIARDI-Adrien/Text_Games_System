@@ -3,7 +3,7 @@ CC = gcc
 CCFLAGS = -W -Wall
 BINARY_NAME = EEPROM_Strings_Converter
 
-all: $(OBJ)
+all:
 	$(CC) $(CCFLAGS) Main.c Parser.c -o $(BINARY_NAME)
 
 clean:
