@@ -2,11 +2,13 @@
 ; @author : Adrien RICCIARDI
 ; @version 1.0 : 19/02/2013
 ; @version 1.1 : 27/02/2013, added I2C EEPROM programming section.
+; @version 1.2 : 19/06/2015, added a waiting loop at the end of the firmware update, merged the release and the development bootloaders into a single one.
 #include <p16f876.inc>
 
 CODE_PROGRAMMING_START EQU h'FE'
 CODE_ACKNOWLEDGE EQU h'EF'
-ADDRESS_STARTUP EQU d'8030' ; Calculated manually...
+CODE_STARTING_PROGRAM EQU 'r' ; Stands for "run"
+ADDRESS_STARTUP EQU d'8025' ; Computed manually...
 EEPROM_BUS_ADDRESS EQU h'A0' ; Address for write commands
 
 	org 0
@@ -292,7 +294,17 @@ Programming_Finished:
 	; Turn led off
 	bcf STATUS, RP0 ; Bank 0
 	bcf PORTB, 7
-	goto $
+	
+	; Wait for the "start program" code to be received
+@Loop_Wait_Start_Program_Code:
+	call UARTReadByte
+	xorlw CODE_STARTING_PROGRAM
+	btfss STATUS, Z
+	goto @Loop_Wait_Start_Program_Code
+	
+	; Reset the program counter
+	clrf PCLATH
+	goto 0
 
 ;----------------------------------------------------------------------------------
 ; Functions
