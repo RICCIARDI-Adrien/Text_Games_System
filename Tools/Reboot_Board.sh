@@ -1,6 +1,12 @@
 #!/bin/sh
 
-Serial_Port=/dev/ttyS0
+Serial_Port=$1
+
+if [ -z $Serial_Port ]
+then
+	echo "Usage : $0 Serial_Port"
+	exit
+fi
 
 # Set the serial port at 19200 bauds, no parity, 8 data bits, 1 stop bit
 echo "Configuring serial port..."
