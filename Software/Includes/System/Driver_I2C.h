@@ -1,13 +1,16 @@
 /** @file Driver_I2C.h
  * Driver for the I2C module optimized for the external EEPROM.
- * @warning This driver functions are used internally by the system, you must not use them directly.
  * @author Adrien RICCIARDI
  * @version 1.0 : 26/02/2013
  * @version 1.1 : 03/09/2013, added I2CWriteByte().
+ * @version 1.2 : 27/07/2015, used acknowledge polling to wait for a write cycle completion.
  */ 
 #ifndef H_DRIVER_I2C_H
 #define H_DRIVER_I2C_H
 
+//-------------------------------------------------------------------------------------------------
+// Functions
+//-------------------------------------------------------------------------------------------------
 /** Initialize the I2C module at 400KHz. */
 void I2CInitialize(void);
 

@@ -31,38 +31,6 @@
 }
 
 //-------------------------------------------------------------------------------------------------
-// Private functions
-//-------------------------------------------------------------------------------------------------
-#if 0
-static void I2CWaitDeviceBusy(void)
-{
-	// The busy EEPROM does not acknowledge a write command
-	do
-	{
-		// Send a start condition to the bus
-		/*sspcon2.SEN = 1;
-		while (sspcon2.SEN); // Wait for start condition completion*/
-		I2C_SEND_START();
-		I2C_WAIT_OPERATION_END();
-		
-		// Send device address and write request
-		/*pir1.SSPIF = 0;
-		sspbuf = EEPROM_ADDRESS_WRITE;
-		while (!pir1.SSPIF); // Wait for transmission end*/
-		sspbuf = EEPROM_ADDRESS_WRITE;
-		I2C_WAIT_OPERATION_END();
-	}
-	while (sspcon2.ACKSTAT);
-	
-	// Send stop condition to abort write operation
-	/*sspcon2.PEN = 1;
-	while (sspcon2.PEN); // Wait for stop condition completion*/
-	I2C_SEND_STOP();
-	I2C_WAIT_OPERATION_END();
-}
-#endif
-
-//-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
 void I2CInitialize(void)
@@ -128,34 +96,45 @@ unsigned char I2CReadNextByte(void)
 
 void I2CWriteByte(unsigned short Address, unsigned char Byte)
 {
-	// Can't directly write a byte, the datasheet indicates that the address must be set for each write operation
-	// I was not able to make the "acknowledge polling" mode works so I used a delay
-
 	// Send a start condition to the bus
 	I2C_SEND_START();
 	I2C_WAIT_OPERATION_END();
 
-	// Send device address and write request
+	// Send the device address with a write request
 	sspbuf = EEPROM_ADDRESS_WRITE;
 	I2C_WAIT_OPERATION_END();
 	
-	// Send address high byte
+	// Send the address high byte
 	sspbuf = Address >> 8;
 	I2C_WAIT_OPERATION_END();
 
-	// Send address low byte
+	// Send the address low byte
 	sspbuf = Address;
 	I2C_WAIT_OPERATION_END();
 	
-	// Send data byte
+	// Send the data byte
 	sspbuf = Byte;
 	I2C_WAIT_OPERATION_END();
 
-	// Send stop condition
+	// Send a stop condition to initiate the write cycle
 	I2C_SEND_STOP();
 	I2C_WAIT_OPERATION_END();
 	
-	// Wait the maximum time required by the EEPROM to complete the write operation
-	delay_ms(5);
-	//I2CWaitDeviceBusy();
+	// Start polling EEPROM acknowledge to determine when the write cycle is finished
+	do
+	{
+		// Send a repeated start (the datasheet expects a start) to avoid hanging the hardware I2C module
+		sspcon2.RSEN = 1;
+		I2C_WAIT_OPERATION_END();
+		
+		// Send the device address with a write request
+		sspbuf = EEPROM_ADDRESS_WRITE;
+		I2C_WAIT_OPERATION_END();
+		
+		// Stop polling when the device has acknowledged
+	} while (sspcon2.ACKSTAT != 0);
+	
+	// Send a stop (not required by the datasheet) to avoid handing the hardware I2C module
+	I2C_SEND_STOP();
+	I2C_WAIT_OPERATION_END();
 }
