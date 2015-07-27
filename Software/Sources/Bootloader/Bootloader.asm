@@ -4,6 +4,7 @@
 ; @version 1.1 : 27/02/2013, added I2C EEPROM programming section.
 ; @version 1.2 : 19/06/2015, added a waiting loop at the end of the firmware update, merged the release and the development bootloaders into a single file.
 ; @version 1.3 : 24/06/2015, improved I2C drivers to fasten download time.
+; @version 1.4 : 27/07/2015, used acknowledge polling to fasten the EEPROM write time.
 #include <p16f876.inc>
 
 ;--------------------------------------------------------------------------------------------------
@@ -12,7 +13,7 @@
 CODE_PROGRAMMING_START EQU h'FE'
 CODE_ACKNOWLEDGE EQU h'EF'
 CODE_STARTING_PROGRAM EQU 'r' ; Stands for "run"
-BOOTLOADER_START_ADDRESS EQU d'8045' ; Computed manually...
+BOOTLOADER_START_ADDRESS EQU d'8046' ; Computed manually...
 EEPROM_WRITE_ADDRESS EQU h'A0' ; I2C EEPROM address with write request
 
 ;--------------------------------------------------------------------------------------------------
@@ -220,27 +221,31 @@ Loop_Program_EEPROM:
 	incf h'22', F
 	
 	;==================================================================================================
-	; Wait for write operation completion
+	; Wait for the write operation completion
 	;==================================================================================================
-	; Each UART byte transmitted at 19200 bit/s halts the program for 520µs.
-	; With 10 calls we wait almost 5.2 ms, which is more than the write time of the EEPROM.
-	; The PC program will ignore received bytes different from CODE_ACKNOWLEDGE.
-	movlw d'65'
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
-	call UARTWriteByte
+@Loop_EEPROM_Acknowledge_Polling:
+	; Send a repeated start to avoid hanging the I2C hardware module
+	bsf STATUS, RP0 ; Bank 1
+	bsf SSPCON2, RSEN
+	call I2CWaitOperationCompletion ; Bank 0
+	
+	; Send device address and write request
+	movlw EEPROM_WRITE_ADDRESS
+	movwf SSPBUF
+	call I2CWaitOperationCompletion ; Bank 0
+	
+	; Did the device acknowledge ?
+	bsf STATUS, RP0 ; Bank 1
+	btfsc SSPCON2, ACKSTAT
+	goto @Loop_EEPROM_Acknowledge_Polling
+	
+	; Send a stop (not required by the EEPROM protocol) to avoid hanging the I2C hardware module
+	bsf SSPCON2, PEN
+	call I2CWaitOperationCompletion ; Bank 0
 	
 	;==================================================================================================
 	; Send acknowledge to PC
 	;==================================================================================================
-	bcf STATUS, RP0 ; Bank 0
 	movlw CODE_ACKNOWLEDGE
 	call UARTWriteByte
 	goto Loop_Program_EEPROM
