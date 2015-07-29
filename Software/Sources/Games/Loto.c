@@ -140,6 +140,7 @@ void Loto(void)
 	}
 	
 	// Show results
+	ScreenSetColor(SCREEN_COLOR_CODE_TEXT_WHITE); // Force the text color to white in the case the last number was found (so the font color would be green)
 	ScreenWriteROMString(STRING_LOTO_NUMBERS_FOUND_COUNT_1);
 	ScreenWriteUnsignedInteger(Numbers_Found);
 	ScreenWriteROMString(STRING_LOTO_NUMBERS_FOUND_COUNT_2);
