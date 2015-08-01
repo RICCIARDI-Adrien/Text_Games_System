@@ -58,7 +58,7 @@ typedef struct
 // Private variables
 //-------------------------------------------------------------------------------------------------
 /** Keep the last pressed key. */
-static unsigned char Last_Pressed_Key = 0;
+static unsigned char Last_Pressed_Key;
 
 //-------------------------------------------------------------------------------------------------
 // Private functions
@@ -221,7 +221,7 @@ inline void TransitionBouncingBalls(void)
 				continue;
 			}
 			
-			// Use common variables to avoid arrays dereferentiation code overhead (due to PIC architecture)
+			// Use common variables to avoid arrays dereferencing code overhead (due to PIC architecture)
 			Row = Balls[i].Row;
 			Column = Balls[i].Column;
 			Horizontal_Speed = Balls[i].Horizontal_Speed;
@@ -521,6 +521,9 @@ void Demo(bool Is_Random_Mode_Enabled)
 	ScreenDisableScrolling();
 	ScreenHideCursor();
 	
+	// Reinitialize the variable each time the demo is called, or it will contain the last hit key, which may be the exiting character...
+	Last_Pressed_Key = 0;
+
 	while (1)
 	{
 		// Wait 750 ms
