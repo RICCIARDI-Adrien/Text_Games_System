@@ -11,7 +11,10 @@
 // Private constants
 //-------------------------------------------------------------------------------------------------
 /** How many transitions are available. */
-#define TRANSITIONS_COUNT 7
+#define TRANSITIONS_COUNT 9
+
+/** The character used for all transitions that completely fill the screen. */
+#define TRANSITION_FILLING_SCREEN_CHARACTER '#'
 
 /** The maximum reachable height for a falling snow column. */
 #define TRANSITION_FALLING_SNOW_MAXIMUM_COLUMN_HEIGHT 20
@@ -89,12 +92,12 @@ inline void TransitionFillScreenUpToDown(void)
 	
 	for (Row = 1; Row <= DEMO_SCREEN_HEIGHT; Row++)
 	{
-		for (Column = 0; Column <= DEMO_SCREEN_WIDTH / 2; Column++)
+		for (Column = 1; Column <= DEMO_SCREEN_WIDTH / 2; Column++)
 		{
 			ScreenSetCursorLocation(Row, Column);
-			ScreenWriteCharacter('#');
-			ScreenSetCursorLocation(Row, DEMO_SCREEN_WIDTH - Column);
-			ScreenWriteCharacter('#');
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			ScreenSetCursorLocation(Row, (DEMO_SCREEN_WIDTH + 1) - Column); // +1 as the last column is DEMO_SCREEN_WIDTH and Column starts from 1 (as the first column is 1)
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
 			
 			// Exit transition if the player hit a key
 			if (KeyboardIsKeyAvailable())
@@ -113,12 +116,12 @@ inline void TransitionFillScreenDownToUp(void)
 	
 	for (Row = DEMO_SCREEN_HEIGHT; Row >= 1 ; Row--)
 	{
-		for (Column = 0; Column <= DEMO_SCREEN_WIDTH / 2; Column++)
+		for (Column = 1; Column <= DEMO_SCREEN_WIDTH / 2; Column++)
 		{
 			ScreenSetCursorLocation(Row, Column);
-			ScreenWriteCharacter('#');
-			ScreenSetCursorLocation(Row, DEMO_SCREEN_WIDTH - Column);
-			ScreenWriteCharacter('#');
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			ScreenSetCursorLocation(Row, (DEMO_SCREEN_WIDTH + 1) - Column); // +1 as the last column is DEMO_SCREEN_WIDTH and Column starts from 1 (as the first column is 1)
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
 			
 			// Exit transition if the player hit a key
 			if (KeyboardIsKeyAvailable())
@@ -128,6 +131,149 @@ inline void TransitionFillScreenDownToUp(void)
 			}
 		}
 	}
+}
+
+/** Fill the screen with characters from left to right. */
+inline void TransitionFillScreenLeftToRight(void)
+{
+	unsigned char Row, Column = 1;
+	
+	while (Column <= DEMO_SCREEN_WIDTH)
+	{
+		// Fill the column from up to down
+		for (Row = 1; Row <= DEMO_SCREEN_HEIGHT; Row++)
+		{
+			ScreenSetCursorLocation(Row, Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			delay_ms(10);
+			
+			// Exit transition if the player hit a key
+			if (KeyboardIsKeyAvailable())
+			{
+				Last_Pressed_Key = KeyboardReadCharacter();
+				return;
+			}
+		}
+		Column++;
+		
+		// Fill next column from down to up
+		for (Row = DEMO_SCREEN_HEIGHT; Row >= 1; Row--)
+		{
+			ScreenSetCursorLocation(Row, Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			delay_ms(10);
+			
+			// Exit transition if the player hit a key
+			if (KeyboardIsKeyAvailable())
+			{
+				Last_Pressed_Key = KeyboardReadCharacter();
+				return;
+			}
+		}
+		Column++;
+	}
+}
+
+/** Fill the screen with characters from right to left. */
+inline void TransitionFillScreenRightToLeft(void)
+{
+	unsigned char Row, Column = DEMO_SCREEN_WIDTH;
+	
+	while (Column >= 1)
+	{
+		// Fill the column from up to down
+		for (Row = 1; Row <= DEMO_SCREEN_HEIGHT; Row++)
+		{
+			ScreenSetCursorLocation(Row, Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			delay_ms(10);
+			
+			// Exit transition if the player hit a key
+			if (KeyboardIsKeyAvailable())
+			{
+				Last_Pressed_Key = KeyboardReadCharacter();
+				return;
+			}
+		}
+		Column--;
+		
+		// Fill next column from down to up
+		for (Row = DEMO_SCREEN_HEIGHT; Row >= 1; Row--)
+		{
+			ScreenSetCursorLocation(Row, Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			delay_ms(10);
+			
+			// Exit transition if the player hit a key
+			if (KeyboardIsKeyAvailable())
+			{
+				Last_Pressed_Key = KeyboardReadCharacter();
+				return;
+			}
+		}
+		Column--;
+	}
+}
+
+/** Fill the screen following a circular path. */
+inline void TransitionFillScreenCircles(void)
+{
+	unsigned char Current_Row, Current_Column, Row_Start = 1, Row_End = DEMO_SCREEN_HEIGHT, Column_Start = 1, Column_End = DEMO_SCREEN_WIDTH;
+	unsigned short Remaining_Characters = DEMO_SCREEN_WIDTH * DEMO_SCREEN_HEIGHT;
+	
+	do
+	{
+		// Draw left to right row
+		Current_Row = Row_Start;
+		for (Current_Column = Column_Start; Current_Column <= Column_End; Current_Column++)
+		{
+			ScreenSetCursorLocation(Current_Row, Current_Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			Remaining_Characters--;
+		}
+		// Upper row has been completely filled
+		Row_Start++;
+				
+		// Draw up to down column
+		Current_Column = Column_End;
+		for (Current_Row = Row_Start; Current_Row <= Row_End; Current_Row++)
+		{
+			ScreenSetCursorLocation(Current_Row, Current_Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			Remaining_Characters--;
+		}
+		// Right side column has been completely filled
+		Column_End--;
+				
+		// Draw right to left row
+		Current_Row = Row_End;
+		for (Current_Column = Column_End; Current_Column >= Column_Start; Current_Column--)
+		{
+			ScreenSetCursorLocation(Current_Row, Current_Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			Remaining_Characters--;
+		}
+		// Lower row has been completely filled
+		Row_End--;
+		
+		// Draw down to up column
+		Current_Column = Column_Start;
+		for (Current_Row = Row_End; Current_Row >= Row_Start; Current_Row--)
+		{
+			ScreenSetCursorLocation(Current_Row, Current_Column);
+			ScreenWriteCharacter(TRANSITION_FILLING_SCREEN_CHARACTER);
+			Remaining_Characters--;
+		}
+		// Left side column has been completely filled
+		Column_Start++;
+		
+		// Exit transition if the player hit a key
+		if (KeyboardIsKeyAvailable())
+		{
+			Last_Pressed_Key = KeyboardReadCharacter();
+			return;
+		}
+	} while (Remaining_Characters > 0);
 }
 
 /** Falling and stacking snow. */
@@ -352,67 +498,6 @@ inline void TransitionFindingNumber(void)
 	}
 }
 
-/** Fill the screen following a circular path. */
-inline void TransitionFillScreenCircles(void)
-{
-	unsigned char Current_Row, Current_Column, Row_Start = 1, Row_End = DEMO_SCREEN_HEIGHT, Column_Start = 1, Column_End = DEMO_SCREEN_WIDTH;
-	unsigned short Remaining_Characters = DEMO_SCREEN_WIDTH * DEMO_SCREEN_HEIGHT;
-	
-	do
-	{
-		// Draw left to right row
-		Current_Row = Row_Start;
-		for (Current_Column = Column_Start; Current_Column <= Column_End; Current_Column++)
-		{
-			ScreenSetCursorLocation(Current_Row, Current_Column);
-			ScreenWriteCharacter('#');
-			Remaining_Characters--;
-		}
-		// Upper row has been completely filled
-		Row_Start++;
-				
-		// Draw up to down column
-		Current_Column = Column_End;
-		for (Current_Row = Row_Start; Current_Row <= Row_End; Current_Row++)
-		{
-			ScreenSetCursorLocation(Current_Row, Current_Column);
-			ScreenWriteCharacter('#');
-			Remaining_Characters--;
-		}
-		// Right side column has been completely filled
-		Column_End--;
-				
-		// Draw right to left row
-		Current_Row = Row_End;
-		for (Current_Column = Column_End; Current_Column >= Column_Start; Current_Column--)
-		{
-			ScreenSetCursorLocation(Current_Row, Current_Column);
-			ScreenWriteCharacter('#');
-			Remaining_Characters--;
-		}
-		// Lower row has been completely filled
-		Row_End--;
-		
-		// Draw down to up column
-		Current_Column = Column_Start;
-		for (Current_Row = Row_End; Current_Row >= Row_Start; Current_Row--)
-		{
-			ScreenSetCursorLocation(Current_Row, Current_Column);
-			ScreenWriteCharacter('#');
-			Remaining_Characters--;
-		}
-		// Left side column has been completely filled
-		Column_Start++;
-		
-		// Exit transition if the player hit a key
-		if (KeyboardIsKeyAvailable())
-		{
-			Last_Pressed_Key = KeyboardReadCharacter();
-			return;
-		}
-	} while (Remaining_Characters > 0);
-}
-
 /** Vertical falling characters as in the Matrix movie. */
 inline void TransitionFillScreenMatrix(void)
 {
@@ -553,18 +638,24 @@ void Demo(bool Is_Random_Mode_Enabled)
 				TransitionFillScreenDownToUp();
 				break;
 			case 2:
-				TransitionFillScreenCircles();
+				TransitionFillScreenLeftToRight();
 				break;
 			case 3:
-				TransitionFillScreenMatrix();
+				TransitionFillScreenRightToLeft();
 				break;
 			case 4:
-				TransitionFallingSnow();
+				TransitionFillScreenCircles();
 				break;
 			case 5:
-				TransitionBouncingBalls();
+				TransitionFillScreenMatrix();
 				break;
 			case 6:
+				TransitionFallingSnow();
+				break;
+			case 7:
+				TransitionBouncingBalls();
+				break;
+			case 8:
 				TransitionFindingNumber();
 				break;
 		}
