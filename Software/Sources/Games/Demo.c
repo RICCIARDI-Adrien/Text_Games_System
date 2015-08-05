@@ -410,7 +410,12 @@ inline void TransitionBouncingBalls(void)
 			
 			// Show ball
 			ScreenSetCursorLocation(Row, Column);
-			if (Has_Collision_Happened) ScreenWriteCharacter('#');
+			if (Has_Collision_Happened)
+			{
+				ScreenSetColor(SCREEN_COLOR_CODE_TEXT_RED);
+				ScreenWriteCharacter('#');
+				ScreenSetColor(SCREEN_COLOR_CODE_TEXT_WHITE);
+			}
 			else ScreenWriteCharacter('O');
 			
 			// Store variables
@@ -467,7 +472,7 @@ inline void TransitionFindingNumber(void)
 		if (Proposed_Number == Number_To_Find)
 		{
 			ScreenWriteROMString(STRING_DEMO_FINDING_NUMBER_VICTORY);
-			if (Wait(TRANSITION_FINDING_NUMBER_END_WAITING_TIME_SECONDS * 10)) return;
+			Wait(TRANSITION_FINDING_NUMBER_END_WAITING_TIME_SECONDS * 10); // The wait function immediately exits when a key is pressed
 			return;
 		}
 		// Bad number found
@@ -489,9 +494,14 @@ inline void TransitionFindingNumber(void)
 		if (Remaining_Attempts == 0)
 		{
 			ScreenWriteROMString(STRING_DEMO_FINDING_NUMBER_LOSS);
-			if (Wait(TRANSITION_FINDING_NUMBER_END_WAITING_TIME_SECONDS * 10)) return;
+			Wait(TRANSITION_FINDING_NUMBER_END_WAITING_TIME_SECONDS * 10);
 			return;
 		}
+		
+		// Display the remaining attempts count
+		ScreenWriteROMString(STRING_DEMO_FINDING_NUMBER_REMAINING_ATTEMPTS_1);
+		ScreenWriteUnsignedInteger(Remaining_Attempts);
+		ScreenWriteROMString(STRING_DEMO_FINDING_NUMBER_REMAINING_ATTEMPTS_2);
 		
 		// Wait to let the watcher understand what is happening
 		if (Wait(20)) return;
