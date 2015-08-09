@@ -5,16 +5,29 @@
 ; @version 1.2 : 19/06/2015, added a waiting loop at the end of the firmware update, merged the release and the development bootloaders into a single file.
 ; @version 1.3 : 24/06/2015, improved I2C drivers to fasten download time.
 ; @version 1.4 : 27/07/2015, used acknowledge polling to fasten the EEPROM write time.
+; @version 2.0 : 06/08/2015, completely rewritten the bootloader to be more reliable.
 #include <p16f876.inc>
 
 ;--------------------------------------------------------------------------------------------------
 ; Constants
 ;--------------------------------------------------------------------------------------------------
-CODE_PROGRAMMING_START EQU h'FE'
-CODE_ACKNOWLEDGE EQU h'EF'
-CODE_STARTING_PROGRAM EQU 'r' ; Stands for "run"
-BOOTLOADER_START_ADDRESS EQU d'8046' ; Computed manually...
-EEPROM_WRITE_ADDRESS EQU h'A0' ; I2C EEPROM address with write request
+; The protocol between the bootloader and the PC codes
+PROTOCOL_CODE_ACKNOWLEDGE EQU h'42' ; The bootloader acknowledges data received from the PC
+PROTOCOL_CODE_START_PROGRAMMING EQU h'5A' ; The PC connects to the board
+PROTOCOL_CODE_PROGRAMMING_FINISHED EQU h'80' ; The PC sends an invalid high byte address (the PIC flash word highest address is 0x1FFF) to signal the end of the flash instructions
+PROTOCOL_CODE_START_PROGRAM EQU 'r' ; Stands for "run"
+
+; The bootloader location at the far end of the program memory
+BOOTLOADER_START_ADDRESS EQU d'8052' ; Computed manually...
+
+; I2C EEPROM address with write request
+EEPROM_WRITE_ADDRESS EQU h'A0'
+
+; External EEPROM data value
+DATA_VARIABLE_ADDRESS EQU h'70' ; The first available byte of the RAM area shared between all banks (so there is no need to change bank every time to access the variable)
+; External EEPROM data address
+ADDRESS_VARIABLE_LOW_BYTE_ADDRESS EQU h'71'
+ADDRESS_VARIABLE_HIGH_BYTE_ADDRESS EQU h'72'
 
 ;--------------------------------------------------------------------------------------------------
 ; Entry point
@@ -27,9 +40,18 @@ EEPROM_WRITE_ADDRESS EQU h'A0' ; I2C EEPROM address with write request
 	org BOOTLOADER_START_ADDRESS
 Bootloader_Start:
 	;==================================================================================================
-	; Initialize UART
+	; Read the "programming mode" flag
 	;==================================================================================================
-	bsf STATUS, RP0 ; Go to bank 1
+	; RB0 pin is not used on the board, use its corresponding TRISB.0 bit as a flag between the firmware and the bootloader
+	bsf STATUS, RP0 ; Bank 1
+	btfsc TRISB, 0 ; The flag is set by default when the MCU boots, so the programming mode is disabled
+	goto Start_Program
+
+	;==================================================================================================
+	; Initialize the UART module
+	;==================================================================================================
+	bcf STATUS, RP1 ; Bank 1
+	bsf STATUS, RP0
 
 	movlw h'0C' ; Set 19200 bit/s rate
 	movwf SPBRG
@@ -37,14 +59,14 @@ Bootloader_Start:
 	movlw h'26' ; Asynchronous transmit enabled, 8-bit, high speed
 	movwf TXSTA
 
-	clrf TRISB ; Configure led port at the same time
+	bcf TRISB, 7 ; Configure the led port at the same time
 
 	bcf STATUS, RP0 ; Go to bank 0
 	movlw h'90' ; Serial port enabled, 8-bit, continuous reception enabled
 	movwf RCSTA
 	
 	;==================================================================================================
-	; Initialize I2C module
+	; Initialize the I2C module
 	;==================================================================================================
 	bsf STATUS, RP0 ; Bank 1
 	clrf SSPSTAT ; 400KHz speed mode, I2C input levels
@@ -57,91 +79,67 @@ Bootloader_Start:
 	movwf SSPCON ; Enable I2C module in Master mode
 	bcf PIR1, SSPIF ; Clear the interrupt flag
 	
-	; Reset registers which hold the address
-	clrf h'21'
-	clrf h'22'
+	; Reset the registers which hold the address
+	clrf ADDRESS_VARIABLE_LOW_BYTE_ADDRESS
+	clrf ADDRESS_VARIABLE_HIGH_BYTE_ADDRESS
 
 	;==================================================================================================
-	; Is the start programming code received ?
+	; Start flash programming
 	;==================================================================================================
-	; Loose approximately 250 * 3 µs to let PC send its code
-	movlw d'251'
-	movwf h'20' ; First available register in bank 0
-@Loop_Waste_Time:
-	; Check byte if one was received
-	btfsc PIR1, RCIF
-	goto Check_Received_Byte
-	; Or continue looping
-	decfsz h'20', F
-	goto @Loop_Waste_Time
-	
-	; Start program if no byte received
-	goto Start_Program
-
-	; Check if the received byte is the good one
-Check_Received_Byte:
-	call UARTReadByte 
-	xorlw CODE_PROGRAMMING_START
-	btfss STATUS, Z
-	goto Start_Program
-
-	; Light led
+	; Light the led
 	bsf PORTB, 7
 
-	;==================================================================================================
-	; Start programming flash
-	;==================================================================================================
-	; Send acknowledge
-	movlw CODE_ACKNOWLEDGE
-	call UARTWriteByte
+	; Wait for the start programming code
+@Loop_Wait_For_Start_Programming_Code:
+	call UARTReadByte ; Bank 0
+	xorlw PROTOCOL_CODE_START_PROGRAMMING
+	btfss STATUS, Z
+	goto @Loop_Wait_For_Start_Programming_Code
 
-	; Ignore all received CODE_PROGRAMMING_START until a different dummy byte is received
-@Loop_Ignore_Code_Programming_Start:
-	call UARTReadByte
-	xorlw CODE_PROGRAMMING_START
-	btfsc STATUS, Z
-	goto @Loop_Ignore_Code_Programming_Start
-	
+	; Tell the PC that the bootloader is ready
+	movlw PROTOCOL_CODE_ACKNOWLEDGE
+	call UARTWriteByte ; Bank 0
+
 	;==================================================================================================
 	; Receive program instructions
 	;==================================================================================================
-Loop_Flash_Program_Instructions:
-	; Address high byte
-	call UARTReadByte 
+Loop_Program_Flash:
+	; Receive the address high byte
+	call UARTReadByte ; Bank 0
 	bsf STATUS, RP1 ; Bank 2
 	movwf EEADRH
 
 	; Check if the received byte was the end of programming code
-	xorlw CODE_PROGRAMMING_START
+	xorlw PROTOCOL_CODE_PROGRAMMING_FINISHED
 	btfsc STATUS, Z
 	goto Loop_Program_EEPROM
 	
-	; Address low byte
-	call UARTReadByte
+	; Receive the address low byte
+	call UARTReadByte ; Bank 0
 	bsf STATUS, RP1 ; Bank 2
 	movwf EEADR
 	
-	; Instruction high byte
-	call UARTReadByte
+	; Receive the instruction high byte
+	call UARTReadByte ; Bank 0
 	bsf STATUS, RP1 ; Bank 2
 	movwf EEDATH
 
-	; Instruction low byte
-	call UARTReadByte
+	; Receive the instruction low byte
+	call UARTReadByte ; Bank 0
 	bsf STATUS, RP1 ; Bank 2
 	movwf EEDATA
-	
+
 	;==================================================================================================
-	; Flash received instruction
+	; Flash the received instruction
 	;==================================================================================================
-	; Reset end of write flag
+	; Reset the end of write flag
 	bcf STATUS, RP1 ; Bank 0
 	bcf PIR2, EEIF
-	
+
 	; Configure writing
 	bsf STATUS, RP1 ; Bank 3
 	bsf STATUS, RP0
-	bsf EECON1, EEPGD ; Select flash memory
+	bsf EECON1, EEPGD ; Select the flash memory
 	bsf EECON1, WREN ; Enable write
 
 	; Special write sequence
@@ -157,68 +155,64 @@ Loop_Flash_Program_Instructions:
 	;==================================================================================================
 	; Send acknowledge to PC
 	;==================================================================================================
-	movlw CODE_ACKNOWLEDGE
-	call UARTWriteByte
-	goto Loop_Flash_Program_Instructions
+	movlw PROTOCOL_CODE_ACKNOWLEDGE
+	call UARTWriteByte ; Bank 0
+	goto Loop_Program_Flash
 	
 	;==================================================================================================
-	; Programming loop of external EEPROM
+	; Programming loop of the external EEPROM
 	;==================================================================================================
 Loop_Program_EEPROM:
 	; Command byte, used only to tell if the program is fully transferred or not
-	bcf STATUS, RP0 ; Bank 0
-	call UARTReadByte 
-	xorlw CODE_PROGRAMMING_START
+	call UARTReadByte ; Bank 0
+	xorlw PROTOCOL_CODE_PROGRAMMING_FINISHED
 	btfsc STATUS, Z
 	goto Programming_Finished
 	
-	; Save received byte into the first available register of bank 0
-	call UARTReadByte
-	movwf h'20'
+	; Save received byte to RAM
+	call UARTReadByte ; Bank 0
+	movwf DATA_VARIABLE_ADDRESS
 	
 	;==================================================================================================
-	; I2C write driver
+	; Write to the I2C EEPROM
 	;==================================================================================================
 	; Send a start condition to the bus
 	bsf STATUS, RP0 ; Bank 1
 	bsf SSPCON2, SEN
-	call I2CWaitOperationCompletion
+	call I2CWaitOperationCompletion ; Bank 0
 	
-	; Send device address and write request
+	; Send the device address with a write request
 	movlw EEPROM_WRITE_ADDRESS
 	movwf SSPBUF
-	call I2CWaitOperationCompletion
+	call I2CWaitOperationCompletion ; Bank 0
 	
-	; Send address high byte
-	; Get high address byte from memory
-	movf h'22', W
+	; Send the address high byte
+	movf ADDRESS_VARIABLE_HIGH_BYTE_ADDRESS, W
 	movwf SSPBUF
-	call I2CWaitOperationCompletion
+	call I2CWaitOperationCompletion ; Bank 0
 	
-	; Send address low byte
-	; Get low address byte from memory
-	movf h'21', W
+	; Send the address low byte
+	movf ADDRESS_VARIABLE_LOW_BYTE_ADDRESS, W
 	movwf SSPBUF
-	call I2CWaitOperationCompletion
+	call I2CWaitOperationCompletion ; Bank 0
 	
-	; Send byte to write
-	; Retrieve data byte from memory
-	movf h'20', W
+	; Send the data to write
+	movf DATA_VARIABLE_ADDRESS, W
 	movwf SSPBUF
-	call I2CWaitOperationCompletion
+	call I2CWaitOperationCompletion ; Bank 0
 	
-	; Send stop condition to start write operation
+	; Send a stop condition to start the write operation
 	bsf STATUS, RP0 ; Bank 1
 	bsf SSPCON2, PEN
-	call I2CWaitOperationCompletion
+	call I2CWaitOperationCompletion ; Bank 0
 	
 	;==================================================================================================
-	; Increment address
+	; Increment the EEPROM address
 	;==================================================================================================
-	incf h'21', F ; We're in bank 0 yet thanks to I2CWaitOperationCompletion
+	incf ADDRESS_VARIABLE_LOW_BYTE_ADDRESS, F
 	; Propagate carry to high byte only if low byte is equal 0 (so it did a roll over)
 	btfsc STATUS, Z
-	incf h'22', F
+	incf ADDRESS_VARIABLE_HIGH_BYTE_ADDRESS, F
 	
 	;==================================================================================================
 	; Wait for the write operation completion
@@ -229,7 +223,7 @@ Loop_Program_EEPROM:
 	bsf SSPCON2, RSEN
 	call I2CWaitOperationCompletion ; Bank 0
 	
-	; Send device address and write request
+	; Send the device address with a write request
 	movlw EEPROM_WRITE_ADDRESS
 	movwf SSPBUF
 	call I2CWaitOperationCompletion ; Bank 0
@@ -246,25 +240,29 @@ Loop_Program_EEPROM:
 	;==================================================================================================
 	; Send acknowledge to PC
 	;==================================================================================================
-	movlw CODE_ACKNOWLEDGE
-	call UARTWriteByte
+	movlw PROTOCOL_CODE_ACKNOWLEDGE
+	call UARTWriteByte ; Bank 0
 	goto Loop_Program_EEPROM
 	
 	;==================================================================================================
-	; Programming finished
+	; Both memories were successfully programmed
 	;==================================================================================================
 Programming_Finished:
-	; Turn led off
+	; Disable the "programming mode" flag
+	bsf STATUS, RP0 ; Bank 1
+	bsf TRISB, 0
+
+	; Turn the led off
 	bcf STATUS, RP0 ; Bank 0
 	bcf PORTB, 7
-	
+
 	; Wait for the "start program" code to be received
 @Loop_Wait_Start_Program_Code:
-	call UARTReadByte
-	xorlw CODE_STARTING_PROGRAM
+	call UARTReadByte ; Bank 0
+	xorlw PROTOCOL_CODE_START_PROGRAM
 	btfss STATUS, Z
 	goto @Loop_Wait_Start_Program_Code
-	
+
 	; Reset the program counter
 	clrf PCLATH
 	goto 0
@@ -339,10 +337,10 @@ Start_Program:
 	bcf PCLATH, 4 ; Go to program page 0
 	bcf PCLATH, 3
 
-	; Program's startup code will be stored here
-	nop
-	nop
-	nop
+	; Program startup code will be stored here (the default code puts the board in bootloader mode)
+	bsf STATUS, RP0 ; Bank 1
+	bcf TRISB, 0
+	goto 0
 	nop
 
 ;--------------------------------------------------------------------------------------------------

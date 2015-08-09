@@ -2,6 +2,8 @@
  * Easy-to-use RS-232 communication layer.
  * @author Adrien RICCIARDI
  * @version 1.0 : 24/02/2013
+ * @version 1.1 : 25/02/2013, added Windows support (which does not save and restore previous parameters as UNIX version does).
+ * @version 1.2 : 21/03/2015, splitted the supported operating system drivers in several files.
  */
 #ifndef H_UART_H
 #define H_UART_H
@@ -9,11 +11,13 @@
 //-------------------------------------------------------------------------------------------------
 // Functions
 //-------------------------------------------------------------------------------------------------
-/** Initialize PC's UART at 19200 bit/s, 8 data bit, no parity, 1 stop bit.
- * @param Device_File_Name Name of the UART's device, like "/dev/ttyS0" or "/dev/ttyUSB0" if using USB serial port converter.
- * @return 1 if the UART was correctly initialized or 0 if not. See errno to find the error.
+/** Initialize the PC UART at the specified baud rate, 8 data bits, no parity, 1 stop bit.
+ * @param String_Device_File_Name The name of the UART device, like "/dev/ttyS0" or "COM1".
+ * @param Baud_Rate The desired baud rate. The function may fail if this is not a standard value.
+ * @return 0 if the UART was correctly initialized,
+ * @return 1 if an error happened. See errno to find the error.
  */
-int UARTOpen(char *Device_File_Name);
+int UARTOpen(char *String_Device_File_Name, unsigned int Baud_Rate);
 
 /** Read a byte from the UART.
  * @return The read byte.
@@ -21,18 +25,32 @@ int UARTOpen(char *Device_File_Name);
  */
 unsigned char UARTReadByte(void);
 
+/** Read several bytes from the UART.
+ * @param Pointer_Buffer On output, contain the read bytes.
+ * @param Bytes_Count How many bytes to read.
+ * @note The function will block until all requested bytes are read.
+ */
+void UARTReadBuffer(void *Pointer_Buffer, unsigned int Bytes_Count);
+
 /** Write a byte to the UART.
  * @param Byte The byte to send.
  */
 void UARTWriteByte(unsigned char Byte);
 
-/** Check if a byte was received by the UART.
- * @param Available_Byte Store the received byte if there was one available.
- * @return 0 if no byte was received (and Available_Byte has unknown value) or 1 if a byte is available (in this case the byte is stored into Available_Byte).
+/** Write several bytes to the UART.
+ * @param Pointer_Buffer The data to write.
+ * @param Bytes_Count How many bytes of data to write.
  */
-int UARTIsByteAvailable(unsigned char *Available_Byte);
+void UARTWriteBuffer(void *Pointer_Buffer, unsigned int Bytes_Count);
 
-/** Restore previous parameters and close UART. */
+/** Check if a byte was received by the UART.
+ * @param Pointer_Available_Byte Store On output, contain the received byte if there was one available.
+ * @return 0 if no byte was received (and Pointer_Available_Byte has unknown value),
+ * @return 1 if a byte is available (in this case the byte is stored into Pointer_Available_Byte).
+ */
+int UARTIsByteAvailable(unsigned char *Pointer_Available_Byte);
+
+/** Restore previous parameters and release the UART. */
 void UARTClose(void);
 
 #endif

@@ -8,8 +8,8 @@
 //-------------------------------------------------------------------------------------------------
 // Private constants
 //-------------------------------------------------------------------------------------------------
-/** Code to begin programming (the same that the programmer uses). */
-#define CODE_PROGRAMMING_START 0xFE
+/** Code to reboot the board in programming mode. */
+#define INTERRUPTS_HANDLER_PROTOCOL_CODE_START_PROGRAMMING 0xFE
 
 //-------------------------------------------------------------------------------------------------
 // Public variables
@@ -28,8 +28,12 @@ void interrupt(void)
 		Interrupts_Handler_Has_UART_Received_Byte = 1;
 		
 		// Reboot the board if a specific magic number has been received
-		if (Interrupts_Handler_UART_Received_Byte_Value == CODE_PROGRAMMING_START)
+		if (Interrupts_Handler_UART_Received_Byte_Value == INTERRUPTS_HANDLER_PROTOCOL_CODE_START_PROGRAMMING)
 		{
+			// Tell the bootloader to go into programming mode
+			trisc.0 = 0;
+			
+			// Do a software reboot
 			asm
 			{
 				// Disable interrupts
