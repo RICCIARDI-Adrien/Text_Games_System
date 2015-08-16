@@ -11,7 +11,7 @@
 // Private constants
 //-------------------------------------------------------------------------------------------------
 /** How many transitions are available. */
-#define TRANSITIONS_COUNT 9
+#define TRANSITIONS_COUNT 10
 
 /** The character used for all transitions that completely fill the screen. */
 #define TRANSITION_FILLING_SCREEN_CHARACTER '#'
@@ -33,6 +33,11 @@
 #define TRANSITION_MATRIX_SIMULTANEOUS_COLUMNS_COUNT 5
 /** How long a column grows until another column is handled (the size is in characters). */
 #define TRANSITION_MATRIX_COLUMN_SIZE_BEFORE_NEW 5
+
+/** The first row on which to display the grid. */
+#define TRANSITION_TIC_TAC_TOE_GRID_STARTING_ROW 5
+/** The first column on which to display the grid. */
+#define TRANSITION_TIC_TAC_TOE_GRID_STARTING_COLUMN 27
 
 // Representation of a bouncing ball
 /*typedef struct
@@ -605,6 +610,115 @@ inline void TransitionFillScreenMatrix(void)
 	ScreenSetColor(SCREEN_COLOR_CODE_TEXT_WHITE); // Reset color attribute
 }
 
+/** The computer plays tic tac toe with a random AI. */
+inline void TransitionTicTacToe(void)
+{
+	unsigned char Row, Column, Character, Box_Content[3][3], Are_Crosses_Playing, i;
+	unsigned short Temp_Word;
+	
+	// Make sure the array is initialized
+	memset(Box_Content, 0, sizeof(Box_Content));
+	
+	// Display the grid
+	// Display each row
+	for (Row = 0; Row < 4; Row++)
+	{
+		ScreenSetCursorLocation(TRANSITION_TIC_TAC_TOE_GRID_STARTING_ROW + (Row * 4), TRANSITION_TIC_TAC_TOE_GRID_STARTING_COLUMN + 1); // No need to draw the first character as it will be overwritten by a '+'
+		for (Column = 1; Column < 24; Column++) ScreenWriteCharacter('-'); // No need to draw the last character either as it will be overwritten too
+	}
+	// Display each column
+	for (Column = 0; Column < 4; Column++)
+	{
+		for (Row = 0; Row < 13; Row++)
+		{
+			ScreenSetCursorLocation(TRANSITION_TIC_TAC_TOE_GRID_STARTING_ROW + Row, TRANSITION_TIC_TAC_TOE_GRID_STARTING_COLUMN + (Column * 8));
+			// Add the '+' at every lines crossing
+			if ((Row % 4) == 0) Character = '+';
+			else Character = '|';
+			ScreenWriteCharacter(Character);
+		}
+	}
+	
+	// Choose who starts the game
+	if ((RandomGenerateNumber() %2) == 1) Are_Crosses_Playing = 1;
+	else Are_Crosses_Playing = 0;
+	
+	// Play game
+	for (i = 0; i < 9; i++) // Fill all boxes
+	{
+		// Wait some time to let the watcher feel the suspense
+		if (Wait(40)) return;
+		
+		// Randomly select an empty box
+		do
+		{
+			Row = RandomGenerateNumber() % 3;
+			Column = RandomGenerateNumber() % 3;
+		} while (Box_Content[Row][Column] != 0);
+		
+		// Mark it
+		if (Are_Crosses_Playing) // Choose the right color and symbol to display
+		{
+			ScreenSetColor(SCREEN_COLOR_CODE_TEXT_YELLOW);
+			Character = 'X';
+		}
+		else
+		{
+			ScreenSetColor(SCREEN_COLOR_CODE_TEXT_CYAN);
+			Character = 'O';
+		}
+		Box_Content[Row][Column] = Character; // Use the characters to distinguish the players
+		// Display the mark
+		ScreenSetCursorLocation(TRANSITION_TIC_TAC_TOE_GRID_STARTING_ROW + (Row * 4) + 2, TRANSITION_TIC_TAC_TOE_GRID_STARTING_COLUMN + (Column * 8) + 4);
+		ScreenWriteCharacter(Character);
+		
+		// Did someone win ?
+		// Compute each row and column total values
+		for (Row = 0; Row < 3; Row++)
+		{
+			// Compute a row value
+			Temp_Word = Box_Content[Row][0] + Box_Content[Row][1] + Box_Content[Row][2];
+			if (Temp_Word == ('X' * 3)) goto Exit_Crosses_Win;
+			if (Temp_Word == ('O' * 3)) goto Exit_Noughts_Win;
+			
+			// Compute a column value
+			Temp_Word = Box_Content[0][Row] + Box_Content[1][Row] + Box_Content[2][Row]; // Yes, this is not the "Column" variable that is used...
+			if (Temp_Word == ('X' * 3)) goto Exit_Crosses_Win;
+			if (Temp_Word == ('O' * 3)) goto Exit_Noughts_Win;
+		}
+		// Compute each diagonal total value
+		// First diagonal
+		Temp_Word = Box_Content[0][0] + Box_Content[1][1] + Box_Content[2][2];
+		if (Temp_Word == ('X' * 3)) goto Exit_Crosses_Win;
+		if (Temp_Word == ('O' * 3)) goto Exit_Noughts_Win;
+		
+		// Second diagonal
+		Temp_Word = Box_Content[0][2] + Box_Content[1][1] + Box_Content[2][0];
+		if (Temp_Word == ('X' * 3)) goto Exit_Crosses_Win;
+		if (Temp_Word == ('O' * 3)) goto Exit_Noughts_Win;
+		
+		// Next player's turn
+		Are_Crosses_Playing = !Are_Crosses_Playing;
+	}
+	
+Exit_Tie:
+	Temp_Word = STRING_DEMO_TIC_TAC_TOE_TIE;
+	goto Exit;
+	
+Exit_Crosses_Win:
+	Temp_Word = STRING_DEMO_TIC_TAC_TOE_CROSSES_WIN;
+	goto Exit;
+	
+Exit_Noughts_Win:
+	Temp_Word = STRING_DEMO_TIC_TAC_TOE_NOUGHTS_WIN;
+	
+Exit:
+	ScreenSetColor(SCREEN_COLOR_CODE_DEFAULT);
+	ScreenSetCursorLocation(24, 1);
+	ScreenWriteROMString(Temp_Word);
+	Wait(40);
+}
+
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
@@ -667,6 +781,9 @@ void Demo(bool Is_Random_Mode_Enabled)
 				break;
 			case 8:
 				TransitionFindingNumber();
+				break;
+			case 9:
+				TransitionTicTacToe();
 				break;
 		}
 		
