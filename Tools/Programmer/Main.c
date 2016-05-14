@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "Hex_Parser.h"
-#include "UART.h"
+#include "Serial_Port.h"
 
 //-------------------------------------------------------------------------------------------------
 // Private constants
@@ -36,6 +36,9 @@ static FILE *File_Program = NULL;
 /** The EEPROM image file. */
 static FILE *File_EEPROM = NULL;
 
+/** The serial port ID. */
+static TSerialPortID Serial_Port_ID = SERIAL_PORT_INVALID_ID;
+
 //-------------------------------------------------------------------------------------------------
 // Private functions
 //-------------------------------------------------------------------------------------------------
@@ -44,7 +47,7 @@ static void ExitCloseFiles(void)
 {
 	if (File_Program != NULL) fclose(File_Program);
 	if (File_EEPROM != NULL) fclose(File_EEPROM);
-	UARTClose();
+	SerialPortClose(Serial_Port_ID);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -87,7 +90,7 @@ int main(int argc, char *argv[])
 	}
 	
 	// Initialize the UART device
-	if (UARTOpen(argv[3], 19200) != 0)
+	if (SerialPortOpen(argv[3], 19200, &Serial_Port_ID) != 0)
 	{
 		printf("Error : can't initialize UART (%s).\n", strerror(errno));
 		return -4;
@@ -98,13 +101,13 @@ int main(int argc, char *argv[])
 	fflush(stdout);
 	
 	// Send the reboot code (it is ignored by the bootloader if it is in programming mode yet)
-	UARTWriteByte(0xFE);
+	SerialPortWriteByte(Serial_Port_ID, PROTOCOL_REBOOT_BOARD_IN_PROGRAMMING_MODE);
 	
 	// Send the start programming code
-	UARTWriteByte(PROTOCOL_CODE_START_PROGRAMMING);
+	SerialPortWriteByte(Serial_Port_ID, PROTOCOL_CODE_START_PROGRAMMING);
 	
 	// Wait for the answer
-	Byte = UARTReadByte();
+	Byte = SerialPortReadByte(Serial_Port_ID);
 	if (Byte != PROTOCOL_CODE_ACKNOWLEDGE)
 	{
 		printf("Error : the board sent a bad answer (0x%02X).\n", Byte);
@@ -129,15 +132,15 @@ int main(int argc, char *argv[])
 				if (Instructions[i].Is_Instruction_Valid)
 				{
 					// Send address high byte (as PIC16F876 has 13-bit wide addresses, we use the remaining bits from the high byte to differentiate bootloader codes from program addresses)
-					UARTWriteByte(Instructions[i].Address >> 8);
+					SerialPortWriteByte(Serial_Port_ID, Instructions[i].Address >> 8);
 					// Send address low byte
-					UARTWriteByte(Instructions[i].Address);
+					SerialPortWriteByte(Serial_Port_ID, Instructions[i].Address);
 					// Send high byte
-					UARTWriteByte(Instructions[i].Code >> 8);
+					SerialPortWriteByte(Serial_Port_ID, Instructions[i].Code >> 8);
 					// Send low byte
-					UARTWriteByte(Instructions[i].Code);
+					SerialPortWriteByte(Serial_Port_ID, Instructions[i].Code);
 					// Wait for board acknowledge
-					Byte = UARTReadByte();
+					Byte = SerialPortReadByte(Serial_Port_ID);
 					if (Byte != PROTOCOL_CODE_ACKNOWLEDGE)
 					{
 						printf("\nError : the board sent a bad answer (0x%02X).\n", Byte);
@@ -152,7 +155,7 @@ int main(int argc, char *argv[])
 				// Signal end of programming to board
 				else if (Instructions[i].Is_End_Of_File)
 				{
-					UARTWriteByte(PROTOCOL_CODE_PROGRAMMING_FINISHED);
+					SerialPortWriteByte(Serial_Port_ID, PROTOCOL_CODE_PROGRAMMING_FINISHED);
 					printf("-> Sending program... Program successfully sent (%d instructions).\n", Data_Sent_Count);
 					goto Program_EEPROM;
 				}
@@ -167,13 +170,13 @@ Program_EEPROM:
 	while (fread(&Byte, 1, 1, File_EEPROM) == 1)
 	{
 		// Signal that there is a byte to program by sending something different from PROTOCOL_CODE_PROGRAMMING_FINISHED
-		UARTWriteByte(PROTOCOL_CODE_ACKNOWLEDGE);
+		SerialPortWriteByte(Serial_Port_ID, PROTOCOL_CODE_ACKNOWLEDGE);
 		
 		// Send byte
-		UARTWriteByte(Byte);
+		SerialPortWriteByte(Serial_Port_ID, Byte);
 			
 		// Wait for acknowledge
-		Byte = UARTReadByte();
+		Byte = SerialPortReadByte(Serial_Port_ID);
 		if (Byte != PROTOCOL_CODE_ACKNOWLEDGE)
 		{
 			printf("\nError : the board sent a bad answer (0x%02X).\n", Byte);
@@ -187,7 +190,7 @@ Program_EEPROM:
 	}
 	
 	// Signal end of programming to board
-	UARTWriteByte(PROTOCOL_CODE_PROGRAMMING_FINISHED);
+	SerialPortWriteByte(Serial_Port_ID, PROTOCOL_CODE_PROGRAMMING_FINISHED);
 	printf("-> Sending EEPROM data... EEPROM successfully programmed (%d bytes).\n", Data_Sent_Count);
 
 	printf("End of programming.\n");

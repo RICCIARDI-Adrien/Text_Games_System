@@ -1,23 +1,18 @@
-/** @file UART_Windows.c
- * @see UART.h for description.
+/** @file Serial_Port_Windows.c
+ * @see Serial_Port.h for description.
  * @author Adrien RICCIARDI
  */
 #ifdef WIN32 // This file will compile on Windows only
+#include <Serial_Port.h>
 #include <stdio.h>
 #include <windows.h>
-#include "UART.h"
  
-//-------------------------------------------------------------------------------------------------
-// Private variables
-//-------------------------------------------------------------------------------------------------
-/** The serial port descriptor. */
-static HANDLE COM_Handle;
-
 //-------------------------------------------------------------------------------------------------
 // Public functions
 //-------------------------------------------------------------------------------------------------
-int UARTOpen(char *String_Device_File_Name, unsigned int Baud_Rate)
+int SerialPortOpen(char *String_Device_File_Name, unsigned int Baud_Rate, TSerialPortID *Pointer_Serial_Port_ID)
 {
+	HANDLE COM_Handle;
 	DCB COM_Parameters;
 	COMMTIMEOUTS Timing_Parameters;
 	char String_Full_Device_Name[128];
@@ -27,7 +22,7 @@ int UARTOpen(char *String_Device_File_Name, unsigned int Baud_Rate)
 	
 	// Open the serial port and set all access rights
 	COM_Handle = CreateFile(String_Full_Device_Name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	if (COM_Handle == INVALID_HANDLE_VALUE) return 1; // Error : can't access to the serial port
+	if (COM_Handle == INVALID_HANDLE_VALUE) return -1; // Error : can't access to the serial port
 	
 	// Configure port
 	COM_Parameters.DCBlength = sizeof(DCB);
@@ -74,22 +69,23 @@ int UARTOpen(char *String_Device_File_Name, unsigned int Baud_Rate)
 	SetCommTimeouts(COM_Handle, &Timing_Parameters);
 	
 	// No error
+	*Pointer_Serial_Port_ID = COM_Handle;
 	return 0;
 }
 
-unsigned char UARTReadByte(void)
+unsigned char SerialPortReadByte(TSerialPortID Serial_Port_ID)
 {
 	unsigned char Byte;
 	DWORD Number_Bytes_Read;
 	
 	do
 	{
-		ReadFile(COM_Handle, &Byte, 1, &Number_Bytes_Read, NULL);
+		ReadFile(Serial_Port_ID, &Byte, 1, &Number_Bytes_Read, NULL);
 	} while (Number_Bytes_Read == 0);
 	return Byte;
 }
 
-void UARTReadBuffer(void *Pointer_Buffer, unsigned int Bytes_Count)
+void SerialPortReadBuffer(TSerialPortID Serial_Port_ID, void *Pointer_Buffer, unsigned int Bytes_Count)
 {
 	unsigned char Byte, *Pointer_Buffer_Byte = Pointer_Buffer;
 	DWORD Number_Bytes_Read;
@@ -97,7 +93,7 @@ void UARTReadBuffer(void *Pointer_Buffer, unsigned int Bytes_Count)
 	while (Bytes_Count > 0)
 	{
 		// Try to get a byte
-		ReadFile(COM_Handle, &Byte, 1, &Number_Bytes_Read, NULL);
+		ReadFile(Serial_Port_ID, &Byte, 1, &Number_Bytes_Read, NULL);
 
 		if (Number_Bytes_Read > 0)
 		{
@@ -108,32 +104,32 @@ void UARTReadBuffer(void *Pointer_Buffer, unsigned int Bytes_Count)
 	}
 }
 
-void UARTWriteByte(unsigned char Byte)
+void SerialPortWriteByte(TSerialPortID Serial_Port_ID, unsigned char Byte)
 {
 	DWORD Number_Bytes_Written;
 	
-	WriteFile(COM_Handle, &Byte, 1, &Number_Bytes_Written, NULL);
+	WriteFile(Serial_Port_ID, &Byte, 1, &Number_Bytes_Written, NULL);
 }
 
-void UARTWriteBuffer(void *Pointer_Buffer, unsigned int Bytes_Count)
+void SerialPortWriteBuffer(TSerialPortID Serial_Port_ID, void *Pointer_Buffer, unsigned int Bytes_Count)
 {
 	DWORD Number_Bytes_Written;
 	
-	WriteFile(COM_Handle, Pointer_Buffer, Bytes_Count, &Number_Bytes_Written, NULL);
+	WriteFile(Serial_Port_ID, Pointer_Buffer, Bytes_Count, &Number_Bytes_Written, NULL);
 }
 
-int UARTIsByteAvailable(unsigned char *Pointer_Available_Byte)
+int SerialPortIsByteAvailable(TSerialPortID Serial_Port_ID, unsigned char *Pointer_Available_Byte)
 {
 	DWORD Number_Bytes_Read;
 	
-	ReadFile(COM_Handle, Pointer_Available_Byte, 1, &Number_Bytes_Read, NULL);
+	ReadFile(Serial_Port_ID, Pointer_Available_Byte, 1, &Number_Bytes_Read, NULL);
 	if (Number_Bytes_Read == 0) return 0;
 	return 1;
 }
 
-void UARTClose(void)
+void SerialPortClose(TSerialPortID Serial_Port_ID)
 {
-	CloseHandle(COM_Handle);
+	CloseHandle(Serial_Port_ID);
 }
 
 #endif

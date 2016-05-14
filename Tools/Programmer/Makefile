@@ -1,10 +1,10 @@
 # Makefile for Text Games System PC programmer.
 CC = gcc
-CCFLAGS = -W -Wall
+CCFLAGS = -W -Wall -I.
 BINARY_NAME = Programmer
 
 all:
-	$(CC) $(CCFLAGS) Hex_Parser.c Main.c UART_Linux.c UART_Windows.c -o $(BINARY_NAME)
+	$(CC) $(CCFLAGS) Hex_Parser.c Main.c Serial_Port_Linux.c Serial_Port_Windows.c -o $(BINARY_NAME)
 
 clean:
 	rm -f $(BINARY_NAME) $(BINARY_NAME).exe
