@@ -9,10 +9,11 @@
 #include <system.h> // Provide all SourceBoost functionalities
 
 // Include only the drivers needed by the user 
-#include <Driver_Timer.h>
+#include <Driver_Flash.h>
 #include <Driver_I2C.h>
 #include <Driver_Internal_EEPROM.h>
 #include <Driver_Random.h>
+#include <Driver_Timer.h>
 #include <Keyboard.h>
 #include <Screen.h>
 #include <Standard_Library.h>
