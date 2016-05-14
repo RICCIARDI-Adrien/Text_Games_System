@@ -1,5 +1,5 @@
 # Makefile for Mains Monitor.
-include ../../../../Tools/Main_Makefile
+include ../../../../Tools/Variables.mk
 
 CC = gcc
 CCFLAGS = -W -Wall

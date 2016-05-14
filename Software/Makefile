@@ -1,5 +1,5 @@
 # Top Makefile used to compile all the Text Games System software.
-include ../Tools/Main_Makefile
+include ../Tools/Variables.mk
 
 SOFTWARE_PATH = .
 
