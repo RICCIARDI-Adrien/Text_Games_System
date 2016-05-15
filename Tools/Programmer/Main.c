@@ -28,6 +28,9 @@
 /** Send this value to the firmware to make it reboot in bootloader mode. */
 #define PROTOCOL_REBOOT_BOARD_IN_PROGRAMMING_MODE 0xFE
 
+/** The instruction address to erase to force the bootloader mode. */
+#define BOOTLOADER_IS_PROGRAM_PRESENT_FLAG_ADDRESS 0x1FFF
+
 //-------------------------------------------------------------------------------------------------
 // Private variables
 //-------------------------------------------------------------------------------------------------
@@ -107,12 +110,7 @@ int main(int argc, char *argv[])
 	SerialPortWriteByte(Serial_Port_ID, PROTOCOL_CODE_START_PROGRAMMING);
 	
 	// Wait for the answer
-	Byte = SerialPortReadByte(Serial_Port_ID);
-	if (Byte != PROTOCOL_CODE_ACKNOWLEDGE)
-	{
-		printf("Error : the board sent a bad answer (0x%02X).\n", Byte);
-		return -5;
-	}
+	while (SerialPortReadByte(Serial_Port_ID) != PROTOCOL_CODE_ACKNOWLEDGE);
 	printf("done.\n");
 	
 	// Send program instructions
@@ -155,6 +153,19 @@ int main(int argc, char *argv[])
 				// Signal end of programming to board
 				else if (Instructions[i].Is_End_Of_File)
 				{
+					// Set the "program present" flag (write everything but 0x3FFF)
+					SerialPortWriteByte(Serial_Port_ID, BOOTLOADER_IS_PROGRAM_PRESENT_FLAG_ADDRESS >> 8); // Send address high byte
+					SerialPortWriteByte(Serial_Port_ID, (unsigned char) BOOTLOADER_IS_PROGRAM_PRESENT_FLAG_ADDRESS); // Send address low byte
+					SerialPortWriteByte(Serial_Port_ID, 0x12); // Send high byte
+					SerialPortWriteByte(Serial_Port_ID, 0x34); // Send low byte
+					// Wait for board acknowledge
+					Byte = SerialPortReadByte(Serial_Port_ID);
+					if (Byte != PROTOCOL_CODE_ACKNOWLEDGE)
+					{
+						printf("\nError : the board sent a bad answer when writing the \"program present\" flag (0x%02X).\n", Byte);
+						return -5;
+					}
+					
 					SerialPortWriteByte(Serial_Port_ID, PROTOCOL_CODE_PROGRAMMING_FINISHED);
 					printf("-> Sending program... Program successfully sent (%d instructions).\n", Data_Sent_Count);
 					goto Program_EEPROM;

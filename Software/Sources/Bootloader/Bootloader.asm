@@ -6,6 +6,7 @@
 ; @version 1.3 : 24/06/2015, improved I2C drivers to fasten download time.
 ; @version 1.4 : 27/07/2015, used acknowledge polling to fasten the EEPROM write time.
 ; @version 2.0 : 06/08/2015, completely rewritten the bootloader to be more reliable.
+; @version 2.1 : 15/05/2016, used a "program presence" flag to be more reliable when a transfer fails.
 #include <p16f876.inc>
 
 ;--------------------------------------------------------------------------------------------------
@@ -18,7 +19,8 @@ PROTOCOL_CODE_PROGRAMMING_FINISHED EQU h'80' ; The PC sends an invalid high byte
 PROTOCOL_CODE_START_PROGRAM EQU 'r' ; Stands for "run"
 
 ; The bootloader location at the far end of the program memory
-BOOTLOADER_START_ADDRESS EQU d'8052' ; Computed manually...
+BOOTLOADER_START_ADDRESS EQU d'8035' ; Computed manually...
+BOOTLOADER_IS_PROGRAM_PRESENT_FLAG_ADDRESS EQU h'1FFF'
 
 ; I2C EEPROM address with write request
 EEPROM_WRITE_ADDRESS EQU h'A0'
@@ -40,12 +42,35 @@ ADDRESS_VARIABLE_HIGH_BYTE_ADDRESS EQU h'72'
 	org BOOTLOADER_START_ADDRESS
 Bootloader_Start:
 	;==================================================================================================
-	; Read the "programming mode" flag
+	; Determine whether the programming mode should be launched or not
 	;==================================================================================================
-	; RB0 pin is not used on the board, use its corresponding TRISB.0 bit as a flag between the firmware and the bootloader
-	bsf STATUS, RP0 ; Bank 1
-	btfsc TRISB, 0 ; The flag is set by default when the MCU boots, so the programming mode is disabled
-	goto Start_Program
+	bsf STATUS, RP1 ; Bank 2
+	
+	; Set read address
+	movlw HIGH(BOOTLOADER_IS_PROGRAM_PRESENT_FLAG_ADDRESS)
+	movwf EEADRH
+	movlw LOW(BOOTLOADER_IS_PROGRAM_PRESENT_FLAG_ADDRESS)
+	movwf EEADR
+	
+	; Read the program memory word
+	bsf STATUS, RP0 ; Bank 3
+	bsf EECON1, EEPGD ; Select program memory
+	bsf EECON1, RD ; Start read operation
+	nop ; Two 'nop' are required for the read to complete
+	nop
+	
+	; Is the flag cleared (= 0x3FFF) ?
+	bcf STATUS, RP0 ; Bank 2
+	; Compare high byte
+	movlw h'3F'
+	xorwf EEDATH, W
+	btfss STATUS, Z ; Skip if equal
+	goto Start_Program ; High byte is different from 0x3F, start the program
+	; Compare low byte
+	movlw h'FF'
+	xorwf EEDATA, W
+	btfss STATUS, Z ; Skip if equal
+	goto Start_Program ; Low byte is different from 0xFF, start the program
 
 	;==================================================================================================
 	; Initialize the UART module
@@ -330,19 +355,22 @@ I2CWaitOperationCompletion:
 ; Jump to the flashed program startup code.
 ; It's located at the end of the memory to ease access to the remapped entry point.
 ;--------------------------------------------------------------------------------------------------
-	org h'1FF8'
+	org h'1FF7'
 Start_Program:
 	bcf STATUS, RP1 ; Go to bank 0
 	bcf STATUS, RP0
 	bcf PCLATH, 4 ; Go to program page 0
 	bcf PCLATH, 3
 
-	; Program startup code will be stored here (the default code puts the board in bootloader mode)
-	bsf STATUS, RP0 ; Bank 1
-	bcf TRISB, 0
-	goto 0
+	; Program startup code will be stored here
+	nop
+	nop
+	nop
 	nop
 
+	; Program present flag
+	dw h'3FFF' ; Tell the flash is empty to force bootloader mode on first boot
+	
 ;--------------------------------------------------------------------------------------------------
 ; Configuration word
 ;--------------------------------------------------------------------------------------------------

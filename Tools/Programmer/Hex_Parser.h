@@ -12,7 +12,7 @@
 /** Address of the beginning of the bootloader code. */
 #define BOOTLOADER_ADDRESS 0x1800
 /** Address where to remap program entry point. */
-#define BOOTLOADER_ENTRY_POINT_ADDRESS 0x1FFC
+#define BOOTLOADER_ENTRY_POINT_ADDRESS 0x1FFB
 
 //-------------------------------------------------------------------------------------------------
 // Types

@@ -1,5 +1,5 @@
 # Makefile for Bootloader
-include ../../../Tools/Main_Makefile
+include ../../../Tools/Variables.mk
 
 AS = gpasm
 ASFLAGS = -p 16F876 -w 1
