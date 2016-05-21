@@ -29,7 +29,9 @@ unsigned char *CellGetWorldRowPointer(unsigned char Row_Number)
 	if (Row_Number >= CONFIGURATION_WORLD_ROWS_COUNT) return NULL;
 	
 	// Compute the row offset in a bank
-	Row_Bank_Offset = Row_Number % 8; // There are 8 rows in a bank
+	Row_Bank_Offset = Row_Number; // Save Row_Number value
+	Row_Number >>= 3; // Compute Row_Number / 8
+	Row_Bank_Offset -= Row_Number << 3; // Row_Bank_Offset = Row_Number % 8, there are 8 rows in a bank
 	Row_Bank_Offset *= CELL_PACKED_ROW_SIZE_BYTES; // Adjust offset to take care of row size
 	
 	// Looks dirty but we need separate arrays to make it works

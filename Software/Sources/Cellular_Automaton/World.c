@@ -16,7 +16,7 @@
  * @param Pointer_Next_Row The row following the one to compute. Set to NULL if there is no following row.
  * @param Pointer_Generated_Row On output, will contain the computed new generation for the current row.
  */
-static void WorldComputeNextRowGeneration(unsigned char *Pointer_Previous_Row, unsigned char *Pointer_Current_Row, unsigned char *Pointer_Next_Row, unsigned char *Pointer_Generated_Row)
+inline void WorldComputeNextRowGeneration(unsigned char *Pointer_Previous_Row, unsigned char *Pointer_Current_Row, unsigned char *Pointer_Next_Row, unsigned char *Pointer_Generated_Row)
 {
 	unsigned char Column_Number, Alive_Neighbor_Cells_Count, Current_Cell_State, New_Cell_State;
 	
