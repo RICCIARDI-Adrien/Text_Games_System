@@ -25,6 +25,7 @@ void main(void)
 	while (1)
 	{
 		// Show main menu
+		ScreenSetColor(SCREEN_COLOR_CODE_DEFAULT); // Restore the default text and background colors
 		ScreenClear();
 		ScreenWriteROMString(STRING_MAIN_MENU_TITLE);
 		ScreenWriteROMString(STRING_MAIN_MENU_ENTRIES);
