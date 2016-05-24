@@ -35,6 +35,8 @@ all:
 	$(call DisplayTitle, "Build successful", 32)
 	
 clean:
+	@cd ../Tools/EEPROM_Strings_Converter && $(MAKE) clean
+	@cd ../Tools/Programmer && $(MAKE) clean
 	@rm -f $(TEXT_GAMES_SYSTEM_BINARIES_PATH)/*
 	@cd Sources/System && $(MAKE) clean
 	@cd Sources/Calculator && $(MAKE) clean
