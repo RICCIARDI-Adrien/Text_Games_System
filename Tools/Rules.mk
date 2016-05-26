@@ -40,8 +40,6 @@ $(PROGRAM_EEPROM_IMAGE): Strings.txt
 
 # This rule allows two thing : build the EEPROM image only for the program that need it, and when needed build the EEPROM image only when the Strings.txt file has changed
 eeprom_image:
-	@echo "OBJ : $(PROGRAM_OBJECTS)"
-	@echo "PROGRAM_OBJECTS_PATH : $(PROGRAM_OBJECTS_PATH)/$(%).obj"
     ifneq ($(EEPROM_IMAGE),)
 		$(MAKE) $(PROGRAM_EEPROM_IMAGE)
     endif
