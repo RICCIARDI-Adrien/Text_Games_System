@@ -4,35 +4,34 @@ include ../Tools/Variables.mk
 SOFTWARE_PATH = .
 
 define DisplayTitle
-	@echo -e "\033[$2m"
+	@echo
 	@echo "+-------------------------------------------"
 	@echo "| $1"
 	@echo "+-------------------------------------------"
-	@echo -e "\033[37m"
 endef
 
 all:
-	$(call DisplayTitle, "Compiling needed tools", 33)
+	$(call DisplayTitle, "Compiling needed tools")
 	@cd ../Tools/EEPROM_Strings_Converter && $(MAKE)
 	@cd ../Tools/Programmer && $(MAKE)
-	$(call DisplayTitle, "Compiling System", 33)
+	$(call DisplayTitle, "Compiling System")
 	@cd Sources/System && $(MAKE)
-	$(call DisplayTitle, "Compiling Calculator", 33)
+	$(call DisplayTitle, "Compiling Calculator")
 	@cd Sources/Calculator && $(MAKE)
-	$(call DisplayTitle, "Compiling Cassaforte", 33)
+	$(call DisplayTitle, "Compiling Cassaforte")
 	@cd Sources/Cassaforte && $(MAKE)
-	$(call DisplayTitle, "Compiling Cellular Automaton", 33)
+	$(call DisplayTitle, "Compiling Cellular Automaton")
 	@cd Sources/Cellular_Automaton && $(MAKE)
-	$(call DisplayTitle, "Compiling ePIC Adventures", 33)
+	$(call DisplayTitle, "Compiling ePIC Adventures")
 	@cd Sources/ePIC_Adventures && $(MAKE)
-	$(call DisplayTitle, "Compiling Games", 33)
+	$(call DisplayTitle, "Compiling Games")
 	@cd Sources/Games && $(MAKE)
-	$(call DisplayTitle, "Compiling Tests", 33)
+	$(call DisplayTitle, "Compiling Tests")
 	@cd Sources/Tests && $(MAKE)
-	$(call DisplayTitle, "Compiling Timestamp Storage", 33)
+	$(call DisplayTitle, "Compiling Timestamp Storage")
 	@cd Sources/Timestamp_Storage/Microcontroller && $(MAKE)
 	@cd Sources/Timestamp_Storage/PC && $(MAKE)
-	$(call DisplayTitle, "Build successful", 32)
+	$(call DisplayTitle, "Build successful")
 	
 clean:
 	@cd ../Tools/EEPROM_Strings_Converter && $(MAKE) clean
