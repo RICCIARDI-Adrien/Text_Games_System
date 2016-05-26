@@ -10,3 +10,6 @@
 *.stat
 *.tree
 
+# Linux executables do not have file extension, so ignore them by name
+Tools/EEPROM_Strings_Converter/EEPROM_Strings_Converter
+Tools/Programmer/Programmer
