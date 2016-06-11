@@ -16,7 +16,7 @@ endif
 #--------------------------------------------------------------------------------------------------
 # Rules
 #--------------------------------------------------------------------------------------------------
-all: headers_check eeprom_image $(PROGRAM_OBJECTS)
+all: headers_check $(PROGRAM_EEPROM_IMAGE) $(PROGRAM_OBJECTS)
 	@# Link the program
 	$(TEXT_GAMES_SYSTEM_LD) $(TEXT_GAMES_SYSTEM_LDFLAGS) $(PROGRAM_OBJECTS) -d $(PROGRAM_OBJECTS_PATH) -p $(BINARY)
 	@# Copy the binary in the right location
@@ -37,12 +37,8 @@ headers_check:
 # This rule will be called only if the EEPROM image must be generated
 $(PROGRAM_EEPROM_IMAGE): Strings.txt
 	$(TEXT_GAMES_SYSTEM_EEPROM_STRINGS_CONVERTER) Strings.txt Strings.h $(PROGRAM_EEPROM_IMAGE) $(TEXT_GAMES_SYSTEM_EEPROM_SIZE)
-
-# This rule allows two thing : build the EEPROM image only for the program that need it, and when needed build the EEPROM image only when the Strings.txt file has changed
-eeprom_image:
-    ifneq ($(EEPROM_IMAGE),)
-		$(MAKE) $(PROGRAM_EEPROM_IMAGE)
-    endif
+	@# Make the headers file more recent than the newly-generated Strings.h header, or the headers_check rule will trigger a full clean on next call
+	touch $(PROGRAM_OBJECTS_PATH)/headers
 
 # Generic compilation rule compiling each .c file to an .obj file (all sources are rebuilded whenever a header file changes to avoid using .h dependencies)
 $(PROGRAM_OBJECTS_PATH)/%.obj: %.c 
