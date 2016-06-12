@@ -9,6 +9,7 @@
 #define H_SHARED_BUFFER_H
 
 #include "Demo.h"
+#include "Free_Fall.h"
 
 //-------------------------------------------------------------------------------------------------
 // Types
@@ -17,6 +18,7 @@
 typedef union
 {
 	TDemoBouncingBall Demo_Bouncing_Balls[DEMO_TRANSITION_BOUNCING_BALLS_COUNT];
+	unsigned short Free_Fall_Obstacle_Rows[FREE_FALL_SCREEN_ROWS_COUNT];
 } TSharedBuffer;
 
 //-------------------------------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 #include <System/System.h>
 #include "Brain_Calculation.h"
 #include "Demo.h"
+#include "Free_Fall.h"
 #include "Loto.h"
 #include "Numbers.h"
 #include "Strings.h"
@@ -35,7 +36,7 @@ void main(void)
 		do
 		{
 			Key = KeyboardReadCharacter();
-		} while ((Key < '1') || (Key > '6'));
+		} while ((Key < '1') || (Key > '7'));
 		
 		// Start chosen game
 		ScreenClear();
@@ -58,6 +59,9 @@ void main(void)
 				break;
 			case '6':
 				Demo(false);
+				break;
+			case '7':
+				FreeFall();
 				break;
 		}
 	}

@@ -1,6 +1,6 @@
 STRING_GENERIC_NEW_LINE				"\r\n"
 STRING_MAIN_MENU_TITLE					"#=========================#\r\n| Text Games System V 1.0 |\r\n#=========================#\r\n\r\n"
-STRING_MAIN_MENU_ENTRIES				"    1. Numbers\r\n    2. Calcul mental\r\n    3. Chasse au Wumpus\r\n    4. Loto\r\n    5. Démo graphique (aléatoire)\r\n    6. Démo graphique (séquence)\r\n"
+STRING_MAIN_MENU_ENTRIES				"    1. Numbers\r\n    2. Calcul mental\r\n    3. Chasse au Wumpus\r\n    4. Loto\r\n    5. Démo graphique (aléatoire)\r\n    6. Démo graphique (séquence)\r\n    7. Chute Libre !\r\n"
 STRING_MAIN_MENU_ASK_USER				"\r\n\r\nChoix du jeu : "
 STRING_NUMBERS_TITLE			"+---------+\r\n| Numbers |\r\n+---------+\r\n\r\nVous devez trouver un nombre compris entre 0 et 99999 en moins de 20 tentatives.\r\nAppuyez sur la touche Echap pour quitter.\r\n\r\n"
 STRING_NUMBERS_ASK_NUMBER		"Insérez un nombre : "
@@ -59,3 +59,4 @@ STRING_DEMO_FINDING_NUMBER_REMAINING_ATTEMPTS_2		" tentative(s) restante(s))\r\n
 STRING_DEMO_TIC_TAC_TOE_CROSSES_WIN					"Les croix ont gagné !"
 STRING_DEMO_TIC_TAC_TOE_NOUGHTS_WIN					"Les ronds ont gagné !"
 STRING_DEMO_TIC_TAC_TOE_TIE							"Match nul !"
+STRING_FREE_FALL_PLAYER_LOST						"Vous avez perdu...\r\nAppuyez sur Echap pour quitter."
