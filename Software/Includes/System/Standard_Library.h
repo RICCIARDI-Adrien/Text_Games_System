@@ -53,13 +53,13 @@ void bzero(unsigned char *Pointer_Buffer, unsigned char Bytes_Count);
  * @param Value The value to put into the buffer.
  * @param Bytes_Count How many buffer bytes to set to Value.
  */
-void memset(unsigned char *Pointer_Buffer, unsigned char Value, unsigned char Bytes_Count);
+void memset(void *Pointer_Buffer, unsigned char Value, unsigned char Bytes_Count);
 
 /** Copy bytes from a memory area to another.
  * @param Pointer_Destination_Buffer The destination memory area.
  * @param Pointer_Source_Buffer The source memory area.
  * @param Bytes_Count How many bytes to copy.
  */
-void memcpy(unsigned char *Pointer_Destination_Buffer, unsigned char *Pointer_Source_Buffer, unsigned char Bytes_Count);
+void memcpy(void *Pointer_Destination_Buffer, void *Pointer_Source_Buffer, unsigned char Bytes_Count);
 
 #endif

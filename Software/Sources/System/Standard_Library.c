@@ -92,23 +92,32 @@ void bzero(unsigned char *Pointer_Buffer, unsigned char Bytes_Count)
 	}
 }
 
-void memset(unsigned char *Pointer_Buffer, unsigned char Value, unsigned char Bytes_Count)
+void memset(void *Pointer_Buffer, unsigned char Value, unsigned char Bytes_Count)
 {
+	unsigned char *Pointer_Buffer_Byte;
+
+	Pointer_Buffer_Byte = (unsigned char *) Pointer_Buffer;
+
 	while (Bytes_Count > 0)
 	{
-		*Pointer_Buffer = Value;
-		Pointer_Buffer++;
+		*Pointer_Buffer_Byte = Value;
+		Pointer_Buffer_Byte++;
 		Bytes_Count--;
 	}
 }
 
-void memcpy(unsigned char *Pointer_Destination_Buffer, unsigned char *Pointer_Source_Buffer, unsigned char Bytes_Count)
+void memcpy(void *Pointer_Destination_Buffer, void *Pointer_Source_Buffer, unsigned char Bytes_Count)
 {
+	unsigned char *Pointer_Destination_Buffer_Byte, *Pointer_Source_Buffer_Byte;
+	
+	Pointer_Destination_Buffer_Byte = (unsigned char *) Pointer_Destination_Buffer;
+	Pointer_Source_Buffer_Byte = (unsigned char *) Pointer_Source_Buffer;
+
 	while (Bytes_Count > 0)
 	{
-		*Pointer_Destination_Buffer = *Pointer_Source_Buffer;
-		Pointer_Destination_Buffer++;
-		Pointer_Source_Buffer++;
+		*Pointer_Destination_Buffer_Byte = *Pointer_Source_Buffer_Byte;
+		Pointer_Destination_Buffer_Byte++;
+		Pointer_Source_Buffer_Byte++;
 		Bytes_Count--;
 	}
 }
