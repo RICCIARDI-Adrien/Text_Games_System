@@ -21,6 +21,8 @@
 
 /** The player row. */
 #define FREE_FALL_PLAYER_ROW 3
+/** The score string row. */
+#define FREE_FALL_SCORE_STRING_ROW FREE_FALL_SCREEN_ROWS_COUNT
  
 //-------------------------------------------------------------------------------------------------
 // Functions

@@ -101,7 +101,8 @@ static void FreeFallGenerateObstacles(void) // This function is not inline becau
 //-------------------------------------------------------------------------------------------------
 void FreeFall(void)
 {
-	unsigned char i, Character, Game_Speed_Frequency_Divider = 0, Is_Player_Crashed = 0;
+	unsigned char i, Character, Game_Speed_Frequency_Divider = 0, Is_Player_Crashed = 0, String_Score_Value[6]; // 5 digits + terminating zero
+	unsigned short Score = 0;
 	
 	ScreenHideCursor();
 	FreeFallInitializeScene();
@@ -116,9 +117,14 @@ void FreeFall(void)
 			// Clear the player trace before scrolling the screen
 			ScreenSetCursorLocation(FREE_FALL_PLAYER_ROW, Free_Fall_Player_Column);
 			ScreenWriteCharacter(' ');
+			
+			// Clear the "score" string before scrolling the screen
+			ScreenSetCursorLocation(FREE_FALL_SCORE_STRING_ROW, 1);
+			for (i = 0; i < 13; i++) ScreenWriteCharacter(' '); // The length of the string "Score : " + 5 digits number
 		
 			// Generate the next row of obstacles
 			FreeFallGenerateObstacles();
+			
 			// Display it
 			ScreenSetCursorLocation(FREE_FALL_SCREEN_ROWS_COUNT, FREE_FALL_PLAYER_LEFTMOST_COLUMN - 1);
 			ScreenWriteCharacter('|');
@@ -129,6 +135,12 @@ void FreeFall(void)
 				ScreenWriteCharacter(Character);
 			}
 			ScreenWriteString("|\r\n"); // Display the pipe rightmost border and force scrolling
+			
+			// Display the current score now that the screen has been scrolled
+			ScreenSetCursorLocation(FREE_FALL_SCORE_STRING_ROW, 1);
+			ScreenWriteROMString(STRING_FREE_FALL_SCORE);
+			itoa(Score, String_Score_Value);
+			ScreenWriteString(String_Score_Value);
 			
 			Game_Speed_Frequency_Divider = 0;
 		}
@@ -197,6 +209,12 @@ void FreeFall(void)
 			// Wait for the player to hit the escape key
 			while (KeyboardReadCharacter() != KEYBOARD_KEY_CODE_ESCAPE);
 			return;
+		}
+		// Increment the player score if an obstacle has been avoided, an only when the screen has been scrolled (i.e. a new obstacle row has been generated) to avoid consuming too much resources in displaying the string
+		else if (Game_Speed_Frequency_Divider == 0) // The game speed frequency divider has been reset, so the screen has been scrolled 
+		{
+			// Increment the score if an obstacle row was successfully avoided
+			if (Shared_Buffer.Free_Fall_Obstacle_Rows[FREE_FALL_PLAYER_ROW] != 0) Score++;
 		}
 	}
 }
