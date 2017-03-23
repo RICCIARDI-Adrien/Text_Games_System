@@ -8,12 +8,12 @@
  * @version 1.4 : 09/08/2015, adapted to the new bootloader.
  */
 #include <errno.h>
+#include <Serial_Port.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "Hex_Parser.h"
-#include "Serial_Port.h"
 
 //-------------------------------------------------------------------------------------------------
 // Private constants
